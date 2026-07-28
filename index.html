@@ -37,7 +37,7 @@
     .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin:10px 0;box-shadow:var(--shadow)}
     .day-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
     .day-head h2{margin:0;font-size:20px}.day-head p{margin:3px 0;color:var(--muted);font-size:12px}
-    .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
+    .meta{display:grid;grid-template-columns:minmax(125px,160px) minmax(105px,145px);gap:8px;margin-top:11px;align-items:end}.meta.single{grid-template-columns:minmax(125px,160px)}.meta input[type="date"]{min-width:0;width:100%;font-size:14px;padding:8px 6px}
     label span,.mini{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
     input,textarea,select{width:100%;border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:10px;padding:9px}
     .exercise{border-top:1px solid var(--line);padding:13px 0;position:relative}.exercise:first-child{border-top:0}
@@ -72,10 +72,19 @@
     .empty{text-align:center;color:var(--muted);padding:18px}
     .badge{display:inline-block;font-size:11px;font-weight:800;padding:4px 7px;border-radius:999px;background:var(--soft);color:var(--primary)}
     @media(max-width:650px){
-      .meta,.progress-grid{grid-template-columns:1fr 1fr}.sets{grid-template-columns:1fr}.guide-grid{grid-template-columns:1fr}
+      .meta{grid-template-columns:minmax(120px,1fr) minmax(95px,.8fr)}.meta.single{grid-template-columns:minmax(120px,160px)}.progress-grid{grid-template-columns:1fr 1fr}.sets{grid-template-columns:1fr}.guide-grid{grid-template-columns:1fr}
       h1{font-size:21px}.tools{flex-direction:column}.smallbtn{padding:6px 8px}
     }
-  </style>
+  
+.workout-overlay{position:fixed;inset:0;background:linear-gradient(180deg,var(--primary),#082f4b);color:#fff;z-index:60;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+.workout-overlay.show{display:flex}.workout-panel{width:min(520px,100%)}.workout-day{font-size:17px;opacity:.85;font-weight:800}
+.workout-clock{font-size:clamp(68px,20vw,116px);font-weight:900;line-height:1;margin:28px 0 12px;font-variant-numeric:tabular-nums}
+.workout-state{font-size:18px;opacity:.9;margin-bottom:30px}.workout-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.workout-buttons button{padding:17px 12px;border-radius:16px;border:0;font-size:17px;font-weight:850}.workout-buttons .wide{grid-column:1/-1}
+.overlay-light{background:#fff;color:#0b5f9b}.overlay-ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)!important}.overlay-stop{background:#ffddd9;color:#9d1c13}
+.mini-workout-bar{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:25;display:none;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 10px;box-shadow:0 8px 30px rgba(0,0,0,.22)}
+.mini-workout-bar.show{display:flex}.mini-time{font-weight:900;font-variant-numeric:tabular-nums;min-width:58px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -137,6 +146,24 @@
   <button class="primary" onclick="scrollNext()">Další série ↓</button>
 </div>
 
+
+<div class="mini-workout-bar" id="miniWorkoutBar">
+  <span id="miniWorkoutDay" class="badge">Trénink</span>
+  <span id="miniWorkoutTime" class="mini-time">00:00</span>
+  <button class="smallbtn" onclick="openWorkoutOverlay()">Otevřít</button>
+</div>
+<div class="workout-overlay" id="workoutOverlay">
+  <div class="workout-panel">
+    <div class="workout-day" id="workoutOverlayDay">TRÉNINK</div>
+    <div class="workout-clock" id="workoutClock">00:00</div>
+    <div class="workout-state" id="workoutState">Probíhá</div>
+    <div class="workout-buttons">
+      <button class="overlay-light" id="pauseWorkoutBtn" onclick="toggleWorkoutPause()">Pozastavit</button>
+      <button class="overlay-ghost" onclick="minimizeWorkout()">Zapisovat série</button>
+      <button class="overlay-stop wide" onclick="requestFinishWorkout()">Ukončit trénink</button>
+    </div>
+  </div>
+</div>
 <nav><div class="navinner">
   <button class="navbtn active" data-screen="monday"><span>🏋️</span>Po</button>
   <button class="navbtn" data-screen="wednesday"><span>💪</span>St</button>
@@ -188,7 +215,7 @@ wednesday:{title:"STŘEDA – PULL",sub:"Záda, zadní ramena, biceps + břicho"
 ["Boční plank","Side Plank","3 × 40 s / strana",60,["Tělo v přímce","Pánev drž vysoko","Dýchej"],["Propadlá pánev","Rotace trupu","Zadržování dechu"],"Pallof Press"],
 ["Pás / kardio","Treadmill Cardio","10–15 min",0,["Přirozený krok","Lehké tempo","Na konci zpomal"],["Držení madel","Příliš vysoké tempo","Náhlé zastavení"],"Stationary Bike"]]},
 friday:{title:"PÁTEK – NOHY + CORE",sub:"Nohy, lýtka a břicho",ex:[
-["Dřep","Squat","4 × 6–8",150,["Zpevni trup před opakováním","Kolena sledují směr špiček","Tlak přes celé chodidlo"],["Kolena dovnitř","Paty vzhůru","Kulatá záda"],"Leg Press"],
+["Hack dřep na stroji","Hack Squat Machine","4 × 8–10",120,["Záda a pánev drž na opěře","Chodidla nastav tak, aby paty zůstaly dole","Kolena veď ve směru špiček"],["Kolena padají dovnitř","Odlepování pánve od opěry","Příliš hluboký pohyb bez kontroly"],"Smith Machine Squat"],
 ["Rumunský mrtvý tah","Romanian Deadlift","4 × 8–10",150,["Boky posílej dozadu","Činku drž blízko stehen","Záda neutrálně"],["Činka daleko od těla","Kulatá záda","Příliš hluboký pohyb"],"Seated Leg Curl"],
 ["Tlak na nohy","Leg Press","3 × 12",120,["Bedra nech na opěře","Kolena ve směru špiček","Kontroluj hloubku"],["Odlepování beder","Kolena dovnitř","Zamykání kolen"],"Hack Squat"],
 ["Zakopávání","Leg Curl","3 × 12",75,["Nastav osu stroje ke kolenu","Boky drž na podložce","Spouštěj pomalu"],["Zvedání boků","Rychlé pouštění","Krátký rozsah"],"Romanian Deadlift"],
@@ -201,7 +228,7 @@ friday:{title:"PÁTEK – NOHY + CORE",sub:"Nohy, lýtka a břicho",ex:[
 
 const KEY="gymTrackerProV2";
 let state=JSON.parse(localStorage.getItem(KEY)||'{"days":{},"history":{},"progress":[],"settings":{"theme":"light"},"workouts":[]}');
-let activeDay="monday", timerInt=null, timerSec=0, currentSetEl=null, wakeLock=null, workoutStart=null;
+let activeDay="monday", timerInt=null, timerSec=0, currentSetEl=null, wakeLock=null; let workoutStart=null,workoutElapsedBeforePause=0,workoutPaused=false,workoutClockInt=null,activeWorkoutDay=null;
 
 function save(){localStorage.setItem(KEY,JSON.stringify(state));refreshSummary()}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -212,11 +239,9 @@ function renderDay(day){
  const p=plans[day], d=state.days[day]||{}, order=d.order||p.ex.map((_,i)=>i);
  let html=`<div class="card"><div class="day-head"><div><h2>${p.title}</h2><p>${p.sub}</p></div>
  <button class="danger" onclick="clearDay('${day}')">Vymazat</button></div>
- <div class="meta">
+ <div class="meta ${day==='monday'?'':'single'}">
  <label><span>Datum</span><input type="date" value="${d.date||today()}" oninput="setDay('${day}','date',this.value)"></label>
- <label><span>Váha (kg)</span><input type="number" step=".1" value="${esc(d.weight)}" oninput="setDay('${day}','weight',this.value)"></label>
- <label><span>Spánek (h)</span><input type="number" step=".5" value="${esc(d.sleep)}" oninput="setDay('${day}','sleep',this.value)"></label>
- <label><span>Energie 1–5</span><input type="number" min="1" max="5" value="${esc(d.energy)}" oninput="setDay('${day}','energy',this.value)"></label>
+ ${day==='monday'?`<label><span>Váha (kg) – jen pondělí</span><input type="number" step=".1" value="${esc(d.weight)}" oninput="setDay('${day}','weight',this.value)"></label>`:''}
  </div><div class="actions"><button class="primary" onclick="startWorkout('${day}')">▶ Začít trénink</button></div></div><div class="card">`;
  order.forEach((i,pos)=>{
    const ex=p.ex[i], e=(d.exercises||{})[i]||{}, prev=lastPerformance(day,i), suggestion=getSuggestion(day,i,ex[2]);
@@ -260,10 +285,24 @@ function completeSet(day,i,s,rest,btn){
  const inputs=currentSetEl.querySelectorAll("input"); inputs.forEach(x=>x.blur());
  scrollNext();
 }
-function startWorkout(day){activeDay=day;workoutStart=Date.now();state.days[day]=state.days[day]||{};state.days[day].startedAt=new Date().toISOString();save();alert("Trénink spuštěn. Čas se počítá.")}
+function startWorkout(day){
+ activeDay=day;activeWorkoutDay=day;workoutStart=Date.now();workoutElapsedBeforePause=0;workoutPaused=false;
+ state.days[day]=state.days[day]||{};state.days[day].startedAt=new Date().toISOString();save();
+ workoutOverlayDay.textContent=plans[day].title;workoutState.textContent="Probíhá";pauseWorkoutBtn.textContent="Pozastavit";
+ workoutOverlay.classList.add("show");miniWorkoutBar.classList.remove("show");updateWorkoutClock();
+ clearInterval(workoutClockInt);workoutClockInt=setInterval(updateWorkoutClock,500);
+ document.documentElement.requestFullscreen?.().catch(()=>{});
+}
+function getWorkoutElapsed(){return workoutElapsedBeforePause+(workoutPaused?0:Math.max(0,Date.now()-workoutStart))}
+function formatClock(ms){const t=Math.floor(ms/1000),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=t%60;return h?`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+function updateWorkoutClock(){const x=formatClock(getWorkoutElapsed());workoutClock.textContent=x;miniWorkoutTime.textContent=x}
+function toggleWorkoutPause(){if(!activeWorkoutDay)return;if(workoutPaused){workoutPaused=false;workoutStart=Date.now();workoutState.textContent="Probíhá";pauseWorkoutBtn.textContent="Pozastavit"}else{workoutElapsedBeforePause+=Date.now()-workoutStart;workoutPaused=true;workoutState.textContent="Pozastaveno";pauseWorkoutBtn.textContent="Pokračovat"}updateWorkoutClock()}
+function minimizeWorkout(){workoutOverlay.classList.remove("show");miniWorkoutBar.classList.add("show");miniWorkoutDay.textContent=plans[activeWorkoutDay].title.replace(/ –.*/,"");document.exitFullscreen?.().catch(()=>{})}
+function openWorkoutOverlay(){if(activeWorkoutDay){workoutOverlay.classList.add("show");miniWorkoutBar.classList.remove("show")}}
+function requestFinishWorkout(){if(activeWorkoutDay&&confirm("Opravdu ukončit trénink?"))finishWorkout(activeWorkoutDay)}
 function finishWorkout(day){
- const d=state.days[day]||{}, p=plans[day], done=Object.values(d.exercises||{}).filter(x=>x.done).length;
- const minutes=Math.max(1,Math.round((Date.now()-(workoutStart||new Date(d.startedAt||Date.now()).getTime()))/60000));
+ const d=state.days[day]||{},p=plans[day],done=Object.values(d.exercises||{}).filter(x=>x.done).length,minutes=Math.max(1,Math.round(getWorkoutElapsed()/60000));
+ workoutOverlay.classList.remove("show");miniWorkoutBar.classList.remove("show");clearInterval(workoutClockInt);document.exitFullscreen?.().catch(()=>{});
  finishSummary.innerHTML=`<p><b>${p.title}</b></p><p>Čas: <b>${minutes} min</b><br>Dokončené cviky: <b>${done}/${p.ex.length}</b></p>`;
  finishDialog.dataset.day=day;finishDialog.dataset.minutes=minutes;finishDialog.showModal();
 }
@@ -274,7 +313,7 @@ function saveFinish(){
    if(sets.some(s=>s.kg||s.reps)){let k=exKey(day,i);state.history[k]=state.history[k]||[];state.history[k].push({date:d.date||today(),sets,notes:e.notes||""})}
  });
  state.workouts.push({day,date:d.date||today(),minutes:+finishDialog.dataset.minutes,note:finishNote.value,completed:true});
- state.days[day].completed=true;save();finishDialog.close();finishNote.value="";renderDay(day);alert("Uloženo ✅");
+ state.days[day].completed=true;save();finishDialog.close();finishNote.value="";renderDay(day);activeWorkoutDay=null;workoutStart=null;workoutElapsedBeforePause=0;workoutPaused=false;alert("Uloženo ✅");
 }
 function clearDay(day){if(confirm("Vymazat aktuální zápis dne? Historie zůstane zachována.")){delete state.days[day];save();renderDay(day)}}
 function occupied(day,i){
