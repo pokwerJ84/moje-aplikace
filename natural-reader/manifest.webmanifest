@@ -1,14 +1,15 @@
 {
   "name": "Poky Reader",
   "short_name": "Poky Reader",
-  "start_url": "./",
+  "start_url": "./?v=5",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f2ea",
-  "theme_color": "#f6f2ea",
+  "background_color": "#0a2357",
+  "theme_color": "#0a2357",
   "description": "Listen to your own PDF and Word documents.",
   "icons": [
     {
-      "src": "poky-icon-180.png?v=4",
+      "src": "icon-poky-180.png?v=5",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
