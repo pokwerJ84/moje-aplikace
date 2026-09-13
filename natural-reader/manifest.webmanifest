@@ -1,0 +1,17 @@
+{
+  "name": "Natural Reader",
+  "short_name": "Reader",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f2ea",
+  "theme_color": "#f6f2ea",
+  "description": "Listen to your own PDF and Word documents.",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
