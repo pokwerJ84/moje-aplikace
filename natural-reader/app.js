@@ -3,17 +3,6 @@ const DB_VERSION = 1;
 const DOC_STORE = "documents";
 const SETTINGS_STORE = "settings";
 
-const AI_VOICES = [
-  ["af_heart", "AI • Heart — US female"],
-  ["af_bella", "AI • Bella — US female"],
-  ["af_sarah", "AI • Sarah — US female"],
-  ["am_michael", "AI • Michael — US male"],
-  ["am_fenrir", "AI • Fenrir — US male"],
-  ["bf_emma", "AI • Emma — UK female"],
-  ["bm_george", "AI • George — UK male"],
-  ["bm_fable", "AI • Fable — UK male"]
-];
-
 const state = {
   db: null,
   docs: [],
@@ -22,22 +11,16 @@ const state = {
   isPlaying: false,
   voices: [],
   selectedVoiceURI: "",
-  voiceChoice: "ai:af_heart",
   speed: 1,
   sleepMinutes: 0,
   sleepTimer: null,
   estimatedParagraphStart: 0,
   estimatedParagraphDuration: 0,
-  lastStartedAt: 0,
-  aiTts: null,
-  aiLoading: null,
-  aiAudio: null,
-  aiAudioIndex: -1,
-  aiAudioStartOffset: 0,
-  aiObjectUrl: ""
+  lastStartedAt: 0
 };
 
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
+
 const homeScreen = $("homeScreen");
 const readerScreen = $("readerScreen");
 const library = $("library");
@@ -61,21 +44,25 @@ function openDb() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(DOC_STORE)) db.createObjectStore(DOC_STORE, { keyPath: "id" });
-      if (!db.objectStoreNames.contains(SETTINGS_STORE)) db.createObjectStore(SETTINGS_STORE, { keyPath: "key" });
+      if (!db.objectStoreNames.contains(DOC_STORE)) {
+        db.createObjectStore(DOC_STORE, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+        db.createObjectStore(SETTINGS_STORE, { keyPath: "key" });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
 
-function store(name, mode = "readonly") {
-  return state.db.transaction(name, mode).objectStore(name);
+function tx(storeName, mode = "readonly") {
+  return state.db.transaction(storeName, mode).objectStore(storeName);
 }
 
 function getAllDocs() {
   return new Promise((resolve, reject) => {
-    const req = store(DOC_STORE).getAll();
+    const req = tx(DOC_STORE).getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
   });
@@ -83,52 +70,34 @@ function getAllDocs() {
 
 function putDoc(doc) {
   return new Promise((resolve, reject) => {
-    const req = store(DOC_STORE, "readwrite").put(doc);
+    const req = tx(DOC_STORE, "readwrite").put(doc);
     req.onsuccess = () => resolve(doc);
     req.onerror = () => reject(req.error);
   });
 }
 
-function removeDoc(id) {
+function deleteDoc(id) {
   return new Promise((resolve, reject) => {
-    const req = store(DOC_STORE, "readwrite").delete(id);
+    const req = tx(DOC_STORE, "readwrite").delete(id);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
 }
 
 function getSetting(key, fallback) {
-  return new Promise(resolve => {
-    const req = store(SETTINGS_STORE).get(key);
+  return new Promise((resolve) => {
+    const req = tx(SETTINGS_STORE).get(key);
     req.onsuccess = () => resolve(req.result?.value ?? fallback);
     req.onerror = () => resolve(fallback);
   });
 }
 
 function setSetting(key, value) {
-  return new Promise(resolve => {
-    const req = store(SETTINGS_STORE, "readwrite").put({ key, value });
+  return new Promise((resolve) => {
+    const req = tx(SETTINGS_STORE, "readwrite").put({ key, value });
     req.onsuccess = () => resolve();
     req.onerror = () => resolve();
   });
-}
-
-function chunkParagraph(text, maxLen = 520) {
-  if (text.length <= maxLen) return [text];
-  const sentences = text.match(/[^.!?。！？]+[.!?。！？]+|[^.!?。！？]+$/g) || [text];
-  const out = [];
-  let current = "";
-  for (const sentence of sentences) {
-    const next = (current + " " + sentence).trim();
-    if (next.length > maxLen && current) {
-      out.push(current.trim());
-      current = sentence.trim();
-    } else {
-      current = next;
-    }
-  }
-  if (current) out.push(current.trim());
-  return out;
 }
 
 function normalizeParagraphs(text) {
@@ -138,18 +107,24 @@ function normalizeParagraphs(text) {
     .split(/\n{2,}/)
     .map(p => p.replace(/\n+/g, " ").replace(/\s+/g, " ").trim())
     .filter(p => p.length > 1)
-    .flatMap(p => chunkParagraph(p));
+    .flatMap(p => chunkParagraph(p, 700));
 }
 
-function naturalizeText(text) {
-  let t = String(text || "")
-    .replace(/[•●▪◦]/g, ". ")
-    .replace(/\s*[–—]\s*/g, ", ")
-    .replace(/\s*\/\s*/g, " or ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (t && !/[.!?。！？:]$/.test(t) && t.length < 120) t += ".";
-  return t;
+function chunkParagraph(text, maxLen = 700) {
+  if (text.length <= maxLen) return [text];
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]+|[^.!?。！？]+$/g) || [text];
+  const chunks = [];
+  let current = "";
+  for (const s of sentences) {
+    if ((current + " " + s).trim().length > maxLen && current) {
+      chunks.push(current.trim());
+      current = s;
+    } else {
+      current = (current + " " + s).trim();
+    }
+  }
+  if (current) chunks.push(current.trim());
+  return chunks;
 }
 
 async function extractDocx(arrayBuffer) {
@@ -180,6 +155,7 @@ async function extractPdf(arrayBuffer) {
       lastY = y;
     }
     if (line.trim()) lines.push(line.trim());
+
     const cleaned = lines
       .filter(x => !/^\s*\d+\s*$/.test(x))
       .filter(x => x.length > 1)
@@ -187,6 +163,10 @@ async function extractPdf(arrayBuffer) {
     paragraphs.push(...normalizeParagraphs(cleaned));
   }
   return paragraphs;
+}
+
+function fileType(file) {
+  return file.name.toLowerCase().endsWith(".pdf") ? "PDF" : "DOCX";
 }
 
 async function handleFile(file) {
@@ -207,7 +187,7 @@ async function handleFile(file) {
       id: crypto.randomUUID(),
       name: file.name.replace(/\.(pdf|docx)$/i, ""),
       originalName: file.name,
-      type: ext === "pdf" ? "PDF" : "DOCX",
+      type: fileType(file),
       paragraphs,
       currentIndex: 0,
       approxOffsetSec: 0,
@@ -232,13 +212,9 @@ function formatDate(ts) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(ts));
 }
 
-function progressFor(doc) {
+function docProgress(doc) {
   if (!doc.paragraphs?.length) return 0;
   return Math.min(100, Math.round((doc.currentIndex / Math.max(1, doc.paragraphs.length - 1)) * 100));
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 }
 
 function renderLibrary() {
@@ -246,10 +222,11 @@ function renderLibrary() {
   library.innerHTML = "";
   documentCount.textContent = `${state.docs.length} ${state.docs.length === 1 ? "document" : "documents"}`;
   emptyState.classList.toggle("hidden", state.docs.length > 0);
+
   for (const doc of state.docs) {
-    const p = progressFor(doc);
     const card = document.createElement("div");
     card.className = "doc-card";
+    const p = docProgress(doc);
     card.innerHTML = `
       <div class="doc-row" data-open="${doc.id}">
         <div class="doc-icon">${doc.type === "PDF" ? "📄" : "📝"}</div>
@@ -267,13 +244,12 @@ function renderLibrary() {
   }
 }
 
-function showScreen(which) {
-  homeScreen.classList.toggle("active", which === "home");
-  readerScreen.classList.toggle("active", which === "reader");
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
 
 async function openDocument(id) {
-  stopSpeech(true);
+  stopSpeech();
   const doc = state.docs.find(d => d.id === id);
   if (!doc) return;
   state.currentDoc = doc;
@@ -293,14 +269,19 @@ async function openDocument(id) {
   }
 }
 
+function showScreen(which) {
+  homeScreen.classList.toggle("active", which === "home");
+  readerScreen.classList.toggle("active", which === "reader");
+}
+
 function renderReaderText() {
   readerContent.innerHTML = "";
   state.currentDoc.paragraphs.forEach((text, index) => {
     const p = document.createElement("p");
     p.textContent = text;
     p.dataset.index = index;
-    p.addEventListener("click", async () => {
-      await setCurrentIndex(index, true);
+    p.addEventListener("click", () => {
+      setCurrentIndex(index, true);
       speakCurrent();
     });
     readerContent.appendChild(p);
@@ -310,11 +291,13 @@ function renderReaderText() {
 
 function highlightCurrent() {
   readerContent.querySelectorAll("p.active").forEach(el => el.classList.remove("active"));
-  readerContent.querySelector(`p[data-index="${state.currentIndex}"]`)?.classList.add("active");
+  const current = readerContent.querySelector(`p[data-index="${state.currentIndex}"]`);
+  if (current) current.classList.add("active");
 }
 
 function scrollToCurrent(smooth = true) {
-  readerContent.querySelector(`p[data-index="${state.currentIndex}"]`)?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
+  const current = readerContent.querySelector(`p[data-index="${state.currentIndex}"]`);
+  if (current) current.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
 }
 
 function updateReaderProgress() {
@@ -327,129 +310,39 @@ function updateReaderProgress() {
   highlightCurrent();
 }
 
-function estimateDuration(text) {
-  const words = Math.max(1, String(text).trim().split(/\s+/).length);
-  return Math.max(2, words / (175 * state.speed) * 60);
-}
-
-function estimateElapsed() {
-  if (state.aiAudio && state.aiAudioIndex === state.currentIndex) {
-    return Math.max(0, state.aiAudioStartOffset + (state.aiAudio.currentTime || 0));
-  }
-  if (!state.lastStartedAt || !state.isPlaying) return state.currentDoc?.approxOffsetSec || 0;
-  return Math.min(state.estimatedParagraphDuration, (Date.now() - state.lastStartedAt) / 1000 + state.estimatedParagraphStart);
-}
-
 async function persistPosition() {
   if (!state.currentDoc) return;
   state.currentDoc.currentIndex = state.currentIndex;
-  state.currentDoc.approxOffsetSec = estimateElapsed();
+  state.currentDoc.approxOffsetSec = estimateElapsedInParagraph();
   state.currentDoc.lastOpenedAt = Date.now();
   await putDoc(state.currentDoc);
 }
 
-function isAiChoice() {
-  return String(state.voiceChoice).startsWith("ai:");
+function estimateDuration(text) {
+  const words = Math.max(1, text.trim().split(/\s+/).length);
+  const wpm = 175 * state.speed;
+  return Math.max(2, words / wpm * 60);
 }
 
-function aiVoiceId() {
-  return isAiChoice() ? state.voiceChoice.slice(3) : "af_heart";
+function estimateElapsedInParagraph() {
+  if (!state.lastStartedAt || !state.isPlaying) return state.currentDoc?.approxOffsetSec || 0;
+  return Math.min(state.estimatedParagraphDuration, (Date.now() - state.lastStartedAt) / 1000 + state.estimatedParagraphStart);
 }
 
-function selectedSystemVoice() {
-  const uri = String(state.voiceChoice).startsWith("sys:") ? state.voiceChoice.slice(4) : state.selectedVoiceURI;
-  return state.voices.find(v => v.voiceURI === uri) ||
-    state.voices.find(v => /^en/i.test(v.lang) && /premium|enhanced|natural|siri|ava|samantha|daniel/i.test(v.name)) ||
-    state.voices.find(v => /^en/i.test(v.lang)) || state.voices[0];
+function selectedVoice() {
+  return state.voices.find(v => v.voiceURI === state.selectedVoiceURI) ||
+         state.voices.find(v => /^en(-|_)/i.test(v.lang) && /premium|enhanced|natural|siri/i.test(v.name)) ||
+         state.voices.find(v => /^en(-|_)/i.test(v.lang)) ||
+         state.voices[0];
 }
 
-function updateVoiceLabel(labelOverride = "") {
-  if (labelOverride) {
-    $("voiceLabel").textContent = labelOverride;
-  } else if (isAiChoice()) {
-    const id = aiVoiceId();
-    $("voiceLabel").textContent = AI_VOICES.find(v => v[0] === id)?.[1].replace("AI • ", "") || "Natural AI";
-  } else {
-    $("voiceLabel").textContent = selectedSystemVoice()?.name || "Device voice";
-  }
-  $("speedLabel").textContent = `${Number(state.speed).toFixed(state.speed % 1 ? 2 : 1).replace(/0$/, "")}×`;
-}
-
-function populateVoices() {
-  voiceSelect.innerHTML = "";
-  const aiGroup = document.createElement("optgroup");
-  aiGroup.label = "Natural AI — best quality";
-  for (const [id, label] of AI_VOICES) {
-    const o = document.createElement("option");
-    o.value = `ai:${id}`;
-    o.textContent = label.replace("AI • ", "");
-    aiGroup.appendChild(o);
-  }
-  voiceSelect.appendChild(aiGroup);
-
-  if (state.voices.length) {
-    const sysGroup = document.createElement("optgroup");
-    sysGroup.label = "Device voices — faster";
-    for (const v of state.voices) {
-      const o = document.createElement("option");
-      o.value = `sys:${v.voiceURI}`;
-      o.textContent = `${v.name} (${v.lang})${/premium|enhanced|natural|siri/i.test(v.name) ? " — enhanced" : ""}`;
-      sysGroup.appendChild(o);
-    }
-    voiceSelect.appendChild(sysGroup);
-  }
-
-  if (![...voiceSelect.options].some(o => o.value === state.voiceChoice)) {
-    state.voiceChoice = "ai:af_heart";
-  }
-  voiceSelect.value = state.voiceChoice;
-  updateVoiceLabel();
-}
-
-function loadDeviceVoices() {
-  if (!("speechSynthesis" in window)) return;
-  state.voices = speechSynthesis.getVoices().slice().sort((a, b) => {
-    const score = v => (/^en/i.test(v.lang) ? 100 : 0) + (/premium|enhanced|natural|siri/i.test(v.name) ? 50 : 0) + (/ava|samantha|daniel/i.test(v.name) ? 20 : 0);
-    return score(b) - score(a) || a.name.localeCompare(b.name);
-  });
-  populateVoices();
-}
-
-async function ensureAiTts() {
-  if (state.aiTts) return state.aiTts;
-  if (state.aiLoading) return state.aiLoading;
-  updateVoiceLabel("Downloading AI voice…");
-  playBtn.textContent = "…";
-  state.aiLoading = (async () => {
-    const { KokoroJP } = await import("https://cdn.jsdelivr.net/npm/kokoro-js-jp@0.2.0/dist/kokoro-jp.web.js");
-    return KokoroJP.load({ japanese: false });
-  })();
-  try {
-    state.aiTts = await state.aiLoading;
-    updateVoiceLabel();
-    return state.aiTts;
-  } finally {
-    state.aiLoading = null;
-  }
-}
-
-function clearAiAudio() {
-  if (state.aiAudio) {
-    state.aiAudio.pause();
-    state.aiAudio.src = "";
-  }
-  state.aiAudio = null;
-  state.aiAudioIndex = -1;
-  state.aiAudioStartOffset = 0;
-  if (state.aiObjectUrl) URL.revokeObjectURL(state.aiObjectUrl);
-  state.aiObjectUrl = "";
-}
-
-function stopSpeech(clearAudio = true) {
-  if (state.currentDoc) persistPosition();
+function cancelSpeech() {
   if ("speechSynthesis" in window) speechSynthesis.cancel();
-  if (clearAudio) clearAiAudio();
-  else state.aiAudio?.pause();
+}
+
+function stopSpeech() {
+  persistPosition();
+  cancelSpeech();
   state.isPlaying = false;
   state.lastStartedAt = 0;
   playBtn.textContent = "▶";
@@ -457,39 +350,42 @@ function stopSpeech(clearAudio = true) {
 
 function pauseSpeech() {
   if (!state.isPlaying) return;
-  if (state.currentDoc) state.currentDoc.approxOffsetSec = estimateElapsed();
-  if (state.aiAudio && state.aiAudioIndex === state.currentIndex) state.aiAudio.pause();
-  else if ("speechSynthesis" in window) speechSynthesis.cancel();
+  const elapsed = estimateElapsedInParagraph();
+  state.currentDoc.approxOffsetSec = elapsed;
+  cancelSpeech();
   state.isPlaying = false;
   state.lastStartedAt = 0;
   playBtn.textContent = "▶";
   persistPosition();
 }
 
-function textFromOffset(text, offsetSec) {
-  if (!offsetSec || offsetSec <= 1) return naturalizeText(text);
+function speechTextFromOffset(text, offsetSec) {
+  if (!offsetSec || offsetSec <= 1) return text;
   const duration = estimateDuration(text);
   const fraction = Math.min(.9, offsetSec / Math.max(1, duration));
-  let i = Math.floor(text.length * fraction);
-  const next = text.indexOf(" ", i);
-  if (next >= 0) i = next + 1;
-  return naturalizeText(text.slice(i));
+  let charIndex = Math.floor(text.length * fraction);
+  const nextSpace = text.indexOf(" ", charIndex);
+  if (nextSpace > -1) charIndex = nextSpace + 1;
+  return text.slice(charIndex);
 }
 
-function speakSystem(useSavedOffset = true) {
-  if (!state.currentDoc || !("speechSynthesis" in window)) return;
-  clearAiAudio();
-  speechSynthesis.cancel();
+function speakCurrent(useSavedOffset = true) {
+  if (!state.currentDoc || !("speechSynthesis" in window)) {
+    alert("Speech synthesis is not available in this browser.");
+    return;
+  }
+  cancelSpeech();
   const text = state.currentDoc.paragraphs[state.currentIndex];
   const startOffset = useSavedOffset ? (state.currentDoc.approxOffsetSec || 0) : 0;
-  const utter = new SpeechSynthesisUtterance(textFromOffset(text, startOffset));
-  const voice = selectedSystemVoice();
+  const spokenText = speechTextFromOffset(text, startOffset);
+  const utter = new SpeechSynthesisUtterance(spokenText);
+  const voice = selectedVoice();
   if (voice) {
     utter.voice = voice;
     utter.lang = voice.lang;
   }
   utter.rate = state.speed;
-  utter.pitch = 0.98;
+  utter.pitch = 1;
   utter.onstart = () => {
     state.isPlaying = true;
     state.estimatedParagraphStart = startOffset;
@@ -513,127 +409,71 @@ function speakSystem(useSavedOffset = true) {
       await persistPosition();
     }
   };
-  utter.onerror = () => {
+  utter.onerror = (e) => {
+    console.warn("Speech error", e);
     state.isPlaying = false;
     playBtn.textContent = "▶";
   };
   speechSynthesis.speak(utter);
 }
 
-async function speakAi(useSavedOffset = true) {
-  if (!state.currentDoc) return;
-
-  if (state.aiAudio && state.aiAudioIndex === state.currentIndex && state.aiAudio.paused && !state.aiAudio.ended) {
-    state.aiAudio.playbackRate = state.speed;
-    state.isPlaying = true;
-    playBtn.textContent = "❚❚";
-    await state.aiAudio.play();
-    return;
-  }
-
-  clearAiAudio();
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
-  const text = state.currentDoc.paragraphs[state.currentIndex];
-  const startOffset = useSavedOffset ? (state.currentDoc.approxOffsetSec || 0) : 0;
-  const spokenText = textFromOffset(text, startOffset);
-
-  try {
-    const tts = await ensureAiTts();
-    updateVoiceLabel("Generating natural speech…");
-    playBtn.textContent = "…";
-    const result = await tts.speak(spokenText, aiVoiceId());
-    const blob = result.toBlob();
-    state.aiObjectUrl = URL.createObjectURL(blob);
-    const audio = new Audio(state.aiObjectUrl);
-    state.aiAudio = audio;
-    state.aiAudioIndex = state.currentIndex;
-    state.aiAudioStartOffset = startOffset;
-    audio.playbackRate = state.speed;
-    audio.preservesPitch = true;
-    audio.onplay = () => {
-      state.isPlaying = true;
-      state.lastStartedAt = Date.now();
-      state.estimatedParagraphStart = startOffset;
-      state.estimatedParagraphDuration = audio.duration || estimateDuration(text);
-      playBtn.textContent = "❚❚";
-      updateVoiceLabel();
-      highlightCurrent();
-      scrollToCurrent();
-    };
-    audio.ontimeupdate = () => {
-      if (state.currentDoc) state.currentDoc.approxOffsetSec = startOffset + (audio.currentTime || 0);
-    };
-    audio.onended = async () => {
-      if (!state.isPlaying) return;
-      clearAiAudio();
-      state.currentDoc.approxOffsetSec = 0;
-      if (state.currentIndex < state.currentDoc.paragraphs.length - 1) {
-        state.currentIndex++;
-        await persistPosition();
-        updateReaderProgress();
-        speakAi(false);
-      } else {
-        state.isPlaying = false;
-        playBtn.textContent = "▶";
-        await persistPosition();
-      }
-    };
-    await audio.play();
-  } catch (err) {
-    console.error("Natural AI voice failed", err);
-    updateVoiceLabel("AI unavailable — using device voice");
-    const fallback = selectedSystemVoice();
-    if (fallback) {
-      state.voiceChoice = `sys:${fallback.voiceURI}`;
-      voiceSelect.value = state.voiceChoice;
-      await setSetting("voiceChoice", state.voiceChoice);
-      speakSystem(useSavedOffset);
-    } else {
-      state.isPlaying = false;
-      playBtn.textContent = "▶";
-      alert("Natural AI voice could not load on this device.");
-    }
-  }
-}
-
-function speakCurrent(useSavedOffset = true) {
-  return isAiChoice() ? speakAi(useSavedOffset) : speakSystem(useSavedOffset);
-}
-
 async function setCurrentIndex(index, resetOffset = true) {
   if (!state.currentDoc) return;
-  stopSpeech(true);
+  cancelSpeech();
   state.currentIndex = Math.max(0, Math.min(index, state.currentDoc.paragraphs.length - 1));
   if (resetOffset) state.currentDoc.approxOffsetSec = 0;
+  state.isPlaying = false;
+  playBtn.textContent = "▶";
   updateReaderProgress();
   scrollToCurrent();
   await persistPosition();
 }
 
-function jumpSeconds(delta) {
+function jumpApproxSeconds(delta) {
   if (!state.currentDoc) return;
-  if (state.aiAudio && state.aiAudioIndex === state.currentIndex && Number.isFinite(state.aiAudio.duration)) {
-    state.aiAudio.currentTime = Math.max(0, Math.min(state.aiAudio.duration - .05, state.aiAudio.currentTime + delta));
-    state.currentDoc.approxOffsetSec = state.aiAudioStartOffset + state.aiAudio.currentTime;
-    persistPosition();
-    return;
-  }
   const text = state.currentDoc.paragraphs[state.currentIndex];
   const duration = estimateDuration(text);
-  let offset = Math.max(0, (state.currentDoc.approxOffsetSec || estimateElapsed()) + delta);
+  let offset = state.currentDoc.approxOffsetSec || estimateElapsedInParagraph();
+  offset = Math.max(0, offset + delta);
+
   let idx = state.currentIndex;
-  if (offset > duration && idx < state.currentDoc.paragraphs.length - 1) {
+  while (offset > duration && idx < state.currentDoc.paragraphs.length - 1) {
+    offset -= duration;
     idx++;
-    offset = 0;
-  } else if (delta < 0 && offset <= 0 && idx > 0) {
+  }
+  if (offset <= 0 && delta < 0 && idx > 0) {
     idx--;
-    offset = Math.max(0, estimateDuration(state.currentDoc.paragraphs[idx]) - 15);
+    offset = Math.max(0, estimateDuration(state.currentDoc.paragraphs[idx]) + offset);
   }
   state.currentIndex = idx;
   state.currentDoc.approxOffsetSec = offset;
   updateReaderProgress();
   if (state.isPlaying) speakCurrent(true);
   else persistPosition();
+}
+
+function loadVoices() {
+  state.voices = speechSynthesis.getVoices().slice().sort((a,b) => {
+    const ae = /^en/i.test(a.lang) ? 0 : 1;
+    const be = /^en/i.test(b.lang) ? 0 : 1;
+    return ae - be || a.name.localeCompare(b.name);
+  });
+  voiceSelect.innerHTML = "";
+  state.voices.forEach(v => {
+    const o = document.createElement("option");
+    o.value = v.voiceURI;
+    o.textContent = `${v.name} (${v.lang})${v.default ? " — default" : ""}`;
+    voiceSelect.appendChild(o);
+  });
+  const preferred = selectedVoice();
+  if (!state.selectedVoiceURI && preferred) state.selectedVoiceURI = preferred.voiceURI;
+  if (state.selectedVoiceURI) voiceSelect.value = state.selectedVoiceURI;
+  updateVoiceLabel();
+}
+
+function updateVoiceLabel() {
+  $("voiceLabel").textContent = selectedVoice()?.name || "System voice";
+  $("speedLabel").textContent = `${Number(state.speed).toFixed(state.speed % 1 ? 2 : 1).replace(/0$/, "")}×`;
 }
 
 function setSleepTimer(minutes) {
@@ -647,7 +487,7 @@ function setSleepTimer(minutes) {
       state.sleepMinutes = 0;
       sleepSelect.value = "0";
       $("timerLabel").textContent = "";
-    }, state.sleepMinutes * 60000);
+    }, state.sleepMinutes * 60 * 1000);
   }
 }
 
@@ -655,68 +495,82 @@ async function renameDocument(id) {
   const doc = state.docs.find(d => d.id === id);
   if (!doc) return;
   const next = prompt("Rename document", doc.name);
-  if (next?.trim()) {
+  if (next && next.trim()) {
     doc.name = next.trim();
     await putDoc(doc);
     renderLibrary();
   }
 }
 
-async function deleteDocument(id) {
+async function removeDocument(id) {
   const doc = state.docs.find(d => d.id === id);
-  if (!doc || !confirm(`Delete "${doc.name}"?`)) return;
-  await removeDoc(id);
+  if (!doc) return;
+  if (!confirm(`Delete "${doc.name}"?`)) return;
+  await deleteDoc(id);
   state.docs = state.docs.filter(d => d.id !== id);
   renderLibrary();
 }
 
-library.addEventListener("click", e => {
+library.addEventListener("click", async (e) => {
   const open = e.target.closest("[data-open]")?.dataset.open;
   const rename = e.target.closest("[data-rename]")?.dataset.rename;
   const del = e.target.closest("[data-delete]")?.dataset.delete;
   if (open) openDocument(open);
   if (rename) renameDocument(rename);
-  if (del) deleteDocument(del);
+  if (del) removeDocument(del);
 });
 
 fileInput.addEventListener("change", () => handleFile(fileInput.files?.[0]));
 
 $("backBtn").addEventListener("click", async () => {
-  stopSpeech(true);
+  stopSpeech();
   clearTimeout(state.sleepTimer);
+  state.sleepTimer = null;
   await persistPosition();
   renderLibrary();
   showScreen("home");
 });
 
-playBtn.addEventListener("click", () => state.isPlaying ? pauseSpeech() : speakCurrent(true));
-$("prevBtn").addEventListener("click", async () => { await setCurrentIndex(state.currentIndex - 1, true); speakCurrent(false); });
-$("nextBtn").addEventListener("click", async () => { await setCurrentIndex(state.currentIndex + 1, true); speakCurrent(false); });
-$("rewindBtn").addEventListener("click", () => jumpSeconds(-15));
-$("forwardBtn").addEventListener("click", () => jumpSeconds(15));
+playBtn.addEventListener("click", () => {
+  if (state.isPlaying) pauseSpeech();
+  else speakCurrent(true);
+});
+
+$("prevBtn").addEventListener("click", async () => {
+  await setCurrentIndex(state.currentIndex - 1, true);
+  speakCurrent(false);
+});
+$("nextBtn").addEventListener("click", async () => {
+  await setCurrentIndex(state.currentIndex + 1, true);
+  speakCurrent(false);
+});
+$("rewindBtn").addEventListener("click", () => jumpApproxSeconds(-15));
+$("forwardBtn").addEventListener("click", () => jumpApproxSeconds(15));
+
 $("settingsBtn").addEventListener("click", () => settingsPanel.classList.remove("hidden"));
 $("closeSettingsBtn").addEventListener("click", () => settingsPanel.classList.add("hidden"));
 $("sheetCloseX").addEventListener("click", () => settingsPanel.classList.add("hidden"));
 
 voiceSelect.addEventListener("change", async () => {
-  stopSpeech(true);
-  state.voiceChoice = voiceSelect.value;
-  if (state.voiceChoice.startsWith("sys:")) state.selectedVoiceURI = state.voiceChoice.slice(4);
-  await setSetting("voiceChoice", state.voiceChoice);
+  state.selectedVoiceURI = voiceSelect.value;
   await setSetting("voiceURI", state.selectedVoiceURI);
   updateVoiceLabel();
+  if (state.isPlaying) speakCurrent(true);
 });
 
 speedSelect.addEventListener("change", async () => {
   state.speed = Number(speedSelect.value);
   await setSetting("speed", state.speed);
-  if (state.aiAudio) state.aiAudio.playbackRate = state.speed;
   updateVoiceLabel();
-  if (state.isPlaying && !state.aiAudio) speakCurrent(true);
+  if (state.isPlaying) speakCurrent(true);
 });
 
-sleepSelect.addEventListener("change", () => setSleepTimer(sleepSelect.value));
-$("continueBtn").addEventListener("click", () => { resumePanel.classList.add("hidden"); scrollToCurrent(false); });
+sleepSelect.addEventListener("change", () => setSleepTimer(Number(sleepSelect.value)));
+
+$("continueBtn").addEventListener("click", () => {
+  resumePanel.classList.add("hidden");
+  scrollToCurrent(false);
+});
 $("restartBtn").addEventListener("click", async () => {
   resumePanel.classList.add("hidden");
   state.currentIndex = 0;
@@ -726,24 +580,30 @@ $("restartBtn").addEventListener("click", async () => {
   scrollToCurrent(false);
 });
 
-document.addEventListener("visibilitychange", () => { if (document.hidden) persistPosition(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) persistPosition();
+});
 window.addEventListener("pagehide", () => persistPosition());
 
 async function init() {
   state.db = await openDb();
   state.docs = await getAllDocs();
   state.selectedVoiceURI = await getSetting("voiceURI", "");
-  state.voiceChoice = await getSetting("voiceChoice", "ai:af_heart");
   state.speed = Number(await getSetting("speed", 1));
   speedSelect.value = String(state.speed);
+
   renderLibrary();
+
   if ("speechSynthesis" in window) {
-    loadDeviceVoices();
-    speechSynthesis.onvoiceschanged = loadDeviceVoices;
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
   } else {
-    populateVoices();
+    $("voiceLabel").textContent = "Speech unavailable";
   }
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(console.warn);
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(console.warn);
+  }
 }
 
 init().catch(err => {

@@ -1,4 +1,4 @@
-const CACHE = "natural-reader-v2";
+const CACHE = "natural-reader-v3";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -24,10 +24,10 @@ self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
   event.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(resp => {
+    fetch(req).then(resp => {
       const copy = resp.clone();
       caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
       return resp;
-    }).catch(() => caches.match("./index.html")))
+    }).catch(() => caches.match(req).then(cached => cached || caches.match("./index.html")))
   );
 });
