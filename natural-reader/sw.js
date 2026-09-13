@@ -5,7 +5,7 @@ const CORE = [
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./cloud-tts-v11.js",
+  "./cloud-tts-v10.js",
   "./updater.js",
   "./manifest.webmanifest",
   "./icon-poky-180.png"
