@@ -21,6 +21,14 @@ button { cursor: pointer; }
 .eyebrow { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
 h1 { margin: 0; font-size: clamp(30px, 9vw, 44px); letter-spacing: -.04em; }
 .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+.usage-card { margin: 0 20px 10px; padding: 15px 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 4px 20px rgba(44,42,36,.04); }
+.usage-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.usage-topline small { display: block; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+.usage-topline strong { display: block; margin-top: 3px; font-size: 15px; }
+.usage-topline > span { font-size: 14px; font-weight: 750; color: var(--accent); }
+.usage-track { height: 7px; margin-top: 12px; background: #ece7df; border-radius: 99px; overflow: hidden; }
+.usage-bar { width: 0; height: 100%; background: var(--accent); border-radius: inherit; transition: width .25s ease; }
+.usage-bottomline { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--muted); font-size: 11px; }
 .add-document { margin: 10px 20px 8px; min-height: 84px; border-radius: 22px; background: var(--accent); color: white; display: flex; align-items: center; gap: 16px; padding: 18px 20px; box-shadow: var(--shadow); }
 .add-document input { display: none; }
 .add-icon { font-size: 32px; font-weight: 300; line-height: 1; }
@@ -86,6 +94,6 @@ h1 { margin: 0; font-size: clamp(30px, 9vw, 44px); letter-spacing: -.04em; }
 .primary-btn { border: 0; background: var(--accent); color: white; }
 .secondary-btn { margin-top: 10px; border: 1px solid var(--line); background: transparent; color: var(--text); }
 @media (min-width: 700px) {
-  .home-topbar, .library-section, .add-document, .status { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .home-topbar, .library-section, .add-document, .status, .usage-card { max-width: 760px; margin-left: auto; margin-right: auto; }
   .add-document { margin-top: 10px; }
 }
