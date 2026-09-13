@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Poky Reader" />
   <title>Poky Reader</title>
-  <link rel="manifest" href="manifest.webmanifest?v=10" />
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=10" />
-  <link rel="stylesheet" href="styles.css?v=10" />
+  <link rel="manifest" href="manifest.webmanifest?v=12" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=12" />
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
   <main class="app-shell">
@@ -20,7 +20,7 @@
           <p class="eyebrow">YOUR DOCUMENTS</p>
           <h1>Poky Reader</h1>
           <p class="subtitle">Listen to your PDF and Word documents.</p>
-          <p id="appVersion" style="margin:6px 0 0;font-size:12px;opacity:.55;">Version v10</p>
+          <p id="appVersion" style="margin:6px 0 0;font-size:12px;opacity:.55;">Version v12</p>
         </div>
       </header>
 
@@ -81,7 +81,7 @@
         <div class="sheet-card">
           <div class="sheet-handle"></div>
           <div class="sheet-title-row"><h2>Reading settings</h2><button id="sheetCloseX" class="text-btn">Done</button></div>
-          <label class="field"><span>Voice mode</span><select id="voiceModeSelect"><option value="free">Free / iPhone</option><option value="standard">Standard Cloud</option><option value="premium" selected>Premium Cloud</option></select></label>
+          <label class="field"><span>Voice mode</span><select id="voiceModeSelect"><option value="free">Free Cloud</option><option value="standard">Standard Cloud</option><option value="premium" selected>Premium Cloud</option></select></label>
           <label class="field"><span>Voice</span><select id="voiceSelect"></select></label>
           <label class="field"><span>Speed</span><select id="speedSelect"><option value="0.75">0.75×</option><option value="0.9">0.9×</option><option value="1" selected>1.0×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select></label>
           <label class="field"><span>Sleep timer</span><select id="sleepSelect"><option value="0">Off</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
@@ -94,8 +94,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module" id="pdfjsModule"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="updater.js?v=10"></script>
-  <script src="cloud-tts-v10.js?v=10"></script>
-  <script type="module" src="app.js?v=10"></script>
+  <script src="updater.js?v=12"></script>
+  <script src="cloud-tts-v12.js?v=12"></script>
+  <script type="module" src="app.js?v=12"></script>
 </body>
 </html>
