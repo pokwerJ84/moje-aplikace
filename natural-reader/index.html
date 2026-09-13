@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Poky Reader" />
   <title>Poky Reader</title>
-  <link rel="manifest" href="manifest.webmanifest?v=5" />
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=5" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="manifest" href="manifest.webmanifest?v=6" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=6" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <main class="app-shell">
@@ -26,43 +26,26 @@
       <label class="add-document">
         <input id="fileInput" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
         <span class="add-icon">＋</span>
-        <span>
-          <strong>Add Document</strong>
-          <small>PDF or Word (.docx)</small>
-        </span>
+        <span><strong>Add Document</strong><small>PDF or Word (.docx)</small></span>
       </label>
 
       <div id="importStatus" class="status hidden"></div>
 
       <section class="library-section">
-        <div class="section-heading">
-          <h2>Library</h2>
-          <span id="documentCount">0 documents</span>
-        </div>
+        <div class="section-heading"><h2>Library</h2><span id="documentCount">0 documents</span></div>
         <div id="library" class="library"></div>
-        <div id="emptyState" class="empty-state">
-          <div class="empty-icon">📖</div>
-          <h3>No documents yet</h3>
-          <p>Add a PDF or Word document to start listening.</p>
-        </div>
+        <div id="emptyState" class="empty-state"><div class="empty-icon">📖</div><h3>No documents yet</h3><p>Add a PDF or Word document to start listening.</p></div>
       </section>
     </section>
 
     <section id="readerScreen" class="screen reader-screen">
       <header class="reader-header">
         <button id="backBtn" class="icon-btn" aria-label="Back">‹</button>
-        <div class="reader-title-wrap">
-          <div id="readerTitle" class="reader-title">Document</div>
-          <div id="readerMeta" class="reader-meta"></div>
-        </div>
+        <div class="reader-title-wrap"><div id="readerTitle" class="reader-title">Document</div><div id="readerMeta" class="reader-meta"></div></div>
         <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙︎</button>
       </header>
 
-      <div class="progress-wrap">
-        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
-        <div class="progress-labels"><span id="progressText">0%</span><span id="paragraphText">Paragraph 1 of 1</span></div>
-      </div>
-
+      <div class="progress-wrap"><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><div class="progress-labels"><span id="progressText">0%</span><span id="paragraphText">Paragraph 1 of 1</span></div></div>
       <article id="readerContent" class="reader-content"></article>
       <div class="player-spacer"></div>
 
@@ -74,9 +57,7 @@
           <button id="nextBtn" class="mini-control">⏭</button>
           <button id="forwardBtn" class="mini-control">↷<small>15s</small></button>
         </div>
-        <div class="now-playing">
-          <span id="voiceLabel">System voice</span><span>•</span><span id="speedLabel">1.0×</span><span id="timerLabel"></span>
-        </div>
+        <div class="now-playing"><span id="voiceLabel">System voice</span><span>•</span><span id="speedLabel">1.0×</span><span id="timerLabel"></span></div>
       </section>
 
       <div id="settingsPanel" class="sheet hidden" role="dialog" aria-modal="true">
@@ -85,29 +66,19 @@
           <div class="sheet-handle"></div>
           <div class="sheet-title-row"><h2>Reading settings</h2><button id="sheetCloseX" class="text-btn">Done</button></div>
           <label class="field"><span>Voice</span><select id="voiceSelect"></select></label>
-          <label class="field"><span>Speed</span><select id="speedSelect">
-            <option value="0.75">0.75×</option><option value="0.9">0.9×</option><option value="1" selected>1.0×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option>
-          </select></label>
-          <label class="field"><span>Sleep timer</span><select id="sleepSelect">
-            <option value="0">Off</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option>
-          </select></label>
+          <label class="field"><span>Speed</span><select id="speedSelect"><option value="0.75">0.75×</option><option value="0.9">0.9×</option><option value="1" selected>1.0×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select></label>
+          <label class="field"><span>Sleep timer</span><select id="sleepSelect"><option value="0">Off</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
         </div>
       </div>
 
-      <div id="resumePanel" class="modal hidden" role="dialog" aria-modal="true">
-        <div class="modal-card">
-          <h2>Continue reading?</h2>
-          <p id="resumeText">Continue from where you stopped?</p>
-          <button id="continueBtn" class="primary-btn">Continue</button>
-          <button id="restartBtn" class="secondary-btn">Start from beginning</button>
-        </div>
-      </div>
+      <div id="resumePanel" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card"><h2>Continue reading?</h2><p id="resumeText">Continue from where you stopped?</p><button id="continueBtn" class="primary-btn">Continue</button><button id="restartBtn" class="secondary-btn">Start from beginning</button></div></div>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module" id="pdfjsModule"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="updater.js?v=5"></script>
-  <script type="module" src="app.js?v=5"></script>
+  <script src="updater.js?v=6"></script>
+  <script type="module" src="app.js?v=6"></script>
+  <script src="voice-hotfix-v6.js?v=6"></script>
 </body>
 </html>
