@@ -1,33 +1,72 @@
-const CACHE = "natural-reader-v3";
-const APP_ASSETS = [
+const VERSION = "v5";
+const CACHE = `poky-reader-${VERSION}`;
+const CORE = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./updater.js",
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon-poky-180.png"
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_ASSETS)));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.allSettled(CORE.map(async asset => {
+      const response = await fetch(asset, { cache: "reload" });
+      if (response.ok) await cache.put(asset, response.clone());
+    }));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+  try {
+    const response = await fetch(request, { cache: "no-store" });
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch (err) {
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+async function navigationNetworkFirst(request) {
+  const cache = await caches.open(CACHE);
+  try {
+    const response = await fetch(request, { cache: "no-store" });
+    if (response.ok) await cache.put("./index.html", response.clone());
+    return response;
+  } catch (err) {
+    return (await cache.match("./index.html")) || (await cache.match("./"));
+  }
+}
 
 self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
-  event.respondWith(
-    fetch(req).then(resp => {
-      const copy = resp.clone();
-      caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
-      return resp;
-    }).catch(() => caches.match(req).then(cached => cached || caches.match("./index.html")))
-  );
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  if (req.mode === "navigate") {
+    event.respondWith(navigationNetworkFirst(req));
+    return;
+  }
+  event.respondWith(networkFirst(req));
+});
+
+self.addEventListener("message", event => {
+  const data = event.data || {};
+  if (data.type === "SKIP_WAITING") self.skipWaiting();
+  if (data.type === "GET_VERSION") event.ports?.[0]?.postMessage({ version: VERSION });
 });
