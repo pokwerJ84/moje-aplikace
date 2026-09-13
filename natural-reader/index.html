@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Poky Reader" />
   <title>Poky Reader</title>
-  <link rel="manifest" href="manifest.webmanifest?v=6" />
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=6" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="manifest" href="manifest.webmanifest?v=8" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-poky-180.png?v=8" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <main class="app-shell">
@@ -57,7 +57,7 @@
           <button id="nextBtn" class="mini-control">⏭</button>
           <button id="forwardBtn" class="mini-control">↷<small>15s</small></button>
         </div>
-        <div class="now-playing"><span id="voiceLabel">System voice</span><span>•</span><span id="speedLabel">1.0×</span><span id="timerLabel"></span></div>
+        <div class="now-playing"><span id="voiceLabel">Poky Voice · Natural</span><span>•</span><span id="speedLabel">1.0×</span><span id="timerLabel"></span></div>
       </section>
 
       <div id="settingsPanel" class="sheet hidden" role="dialog" aria-modal="true">
@@ -77,8 +77,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module" id="pdfjsModule"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="updater.js?v=6"></script>
-  <script type="module" src="app.js?v=6"></script>
-  <script src="voice-hotfix-v6.js?v=6"></script>
+  <script src="updater.js?v=8"></script>
+  <script src="cloud-tts-v8.js?v=8"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>
