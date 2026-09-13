@@ -1,4 +1,4 @@
-const CACHE = "natural-reader-v1";
+const CACHE = "natural-reader-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -23,7 +23,6 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
-
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(resp => {
       const copy = resp.clone();
