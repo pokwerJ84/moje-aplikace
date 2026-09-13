@@ -1,10 +1,11 @@
-const VERSION = "v5";
+const VERSION = "v6";
 const CACHE = `poky-reader-${VERSION}`;
 const CORE = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./voice-hotfix-v6.js",
   "./updater.js",
   "./manifest.webmanifest",
   "./icon-poky-180.png"
