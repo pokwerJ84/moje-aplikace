@@ -1,11 +1,11 @@
-const VERSION = "v13";
+const VERSION = "v14";
 const CACHE = `poky-reader-${VERSION}`;
 const CORE = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./cloud-tts-v13.js",
+  "./cloud-tts-v14.js",
   "./updater.js",
   "./manifest.webmanifest",
   "./icon-poky-180.png"
