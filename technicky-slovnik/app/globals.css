@@ -6,6 +6,9 @@
   scrollbar-width: thin;
 }
 
+.header-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.language-switch{display:flex;border:1px solid #dce4f1;border-radius:9px;padding:3px;background:white}.dictionary{margin-bottom:28px}.saved-search{padding:20px 28px 0}.saved-search label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:9px}.saved-search>div{display:flex;gap:8px}.saved-search input{background:white;height:44px;font-size:16px}.japanese-word{display:flex;align-items:center;gap:4px}.japanese-word .word-link{flex:1;min-width:0}.japanese-word>button{flex-shrink:0;color:#144bc2}.pronunciation-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.close-dialog{position:absolute;right:12px;top:10px;font-size:24px}.detail [data-slot=dialog-header]{padding-right:28px}
+@media(max-width:700px){.header-actions{gap:12px;width:100%;justify-content:space-between}.saved-search{padding:18px 16px 0}.saved-search>div{flex-wrap:wrap}.saved-search input{flex-basis:100%}.word-table th:first-child{width:36%!important}.word-table th:nth-child(2){width:25%!important}.word-table th:nth-child(3){width:29%!important}.japanese-word{align-items:flex-start;flex-wrap:wrap}.japanese-word .word-link{flex-basis:100%}.japanese-word>button{height:30px;width:30px}.top{gap:18px}}
+
 @utility scrollbar-none {
   scrollbar-width: none;
 
