@@ -187,6 +187,7 @@ $('#words').addEventListener('click',event=>{
   const del=event.target.closest('[data-delete]');if(del)void deleteWord(del.dataset.delete);
 });
 $('#add-open').addEventListener('click',()=>{$('#word-form').reset();setMessage($('#form-message'),'');$('#dialog-title').textContent=t('newWord');$('#word-dialog').showModal();});
+$('#word-close').addEventListener('click',()=>$('#word-dialog').close());
 $('#word-form').addEventListener('submit',async event=>{
   event.preventDefault(); const form=event.currentTarget; const values=Object.fromEntries(new FormData(form)); const submit=form.querySelector('[type=submit]');submit.disabled=true;submit.textContent=t('saving');
   const row={id:crypto.randomUUID(),ja:String(values.ja).trim(),en:String(values.en).trim(),cs:String(values.cs).trim(),description_ja:String(values.description_ja||'').trim(),description_cs:String(values.description_cs||'').trim(),description_en:String(values.description_en||'').trim()};
