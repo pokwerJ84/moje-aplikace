@@ -20,13 +20,13 @@
             <button type="button" data-language="cs" aria-pressed="true">Česky</button>
             <button type="button" data-language="en" aria-pressed="false">English</button>
           </div>
-          <button id="sign-out" class="button outline hidden" type="button" data-i18n="signOut">Odhlásit</button>
+          <button id="account-action" class="button outline" type="button" data-i18n="guestSignIn">Přihlásit a synchronizovat</button>
         </div>
       </header>
 
-      <section id="auth-panel" class="panel auth-panel">
+      <section id="auth-panel" class="panel auth-panel hidden">
         <h1 data-i18n="signInTitle">Přihlášení do slovníku</h1>
-        <p data-i18n="signInHelp">Pošlu ti bezpečný přihlašovací odkaz na e-mail.</p>
+        <p data-i18n="signInHelp">Slovník můžeš používat bez účtu. Přihlášení později synchronizuje tvoje slovíčka.</p>
         <form id="sign-in-form" class="inline-form">
           <label class="sr-only" for="email" data-i18n="email">E-mail</label>
           <input id="email" type="email" autocomplete="email" required placeholder="E-mail" />
@@ -35,7 +35,7 @@
         <p id="auth-message" class="message" role="status"></p>
       </section>
 
-      <div id="app-panel" class="hidden">
+      <div id="app-panel">
         <section class="panel dictionary">
           <div class="section-title"><div><h1 data-i18n="myWords">Můj slovník</h1><p class="hint" data-i18n="hint">Japonsky · anglicky · česky. Klikni na slovíčko pro popis nebo fotku.</p></div><span id="word-count" class="count">0 slovíček</span></div>
           <div class="toolbar">
