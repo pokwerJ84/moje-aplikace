@@ -3,6 +3,7 @@ import { toHiragana, toRomaji } from 'https://esm.sh/wanakana@5.3.1';
 
 // This is a publishable key. Access to every dictionary row and image is
 // restricted by the Supabase RLS and Storage policies created for this app.
+const LOCAL_KEY = 'technical-dictionary-local-v1';
 const SUPABASE_URL = 'https://pornzqperiptczusueso.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__4347c8h__yHW49VfXmTfw_9XnTC--n';
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -23,11 +24,20 @@ const initialWords = [
 ].map(([id,cs,en,ja,description_cs,description_en]) => ({id,cs,en,ja,description_cs,description_en}));
 
 const words = {
-  cs: {title:'Technický slovník',subtitle:'Moje slovíčka z praxe',signInTitle:'Přihlášení do slovníku',signInHelp:'Pošlu ti bezpečný přihlašovací odkaz na e-mail.',email:'E-mail',sendLink:'Poslat odkaz',linkSent:'Odkaz je na cestě. Otevři e-mail na tomto zařízení a klikni na odkaz.',signOut:'Odhlásit',myWords:'Můj slovník',hint:'Japonsky · anglicky · česky. Klikni na slovíčko pro popis nebo fotku.',searchLabel:'Hledat ve slovníku',searchPlaceholder:'Hledej japonsky, anglicky nebo česky…',addWord:'Přidat slovíčko',japanese:'Japonsky · rómadži',english:'Anglicky',czech:'Česky',actions:'Akce',empty:'Slovník je prázdný. Přidej své první slovíčko.',noResults:'Nic jsem nenašel. Zkus jiné slovo.',lookupTitle:'Najít nové slovíčko',lookupSubtitle:'Anglicko-japonský slovník Jisho',lookupLabel:'Anglický nebo japonský výraz',lookupPlaceholder:'Např. voltage, bearing, fan…',search:'Vyhledat',searching:'Hledám…',noJisho:'Žádný výsledek. Zkus jiné slovo nebo otevři Jisho.',jishoError:'Jisho teď neodpovídá. Můžeš hledat přímo na Jisho.',openJisho:'Otevřít Jisho',details:'Detail na Jisho',use:'Použít',newWord:'Nové slovíčko',allLanguages:'Vyplň názvy ve všech třech jazycích.',japaneseRomaji:'Japonsky v rómadži',descriptionCs:'Popis česky (volitelné)',descriptionEn:'Popis anglicky (volitelné)',saveWord:'Uložit slovíčko',saving:'Ukládám…',listen:'Poslechnout',noDescription:'K tomuto slovíčku zatím není popis.',noDescriptionEn:'K tomuto slovíčku zatím není anglický popis.',noDescriptionCs:'K tomuto slovíčku zatím není český popis.',photoPrompt:'Přidej fotku z práce nebo vlastní obrázek.',addPhoto:'Přidat obrázek',takePhoto:'Vyfotit',photoLimit:'JPG, PNG, WebP nebo GIF · do 8 MB.',delete:'Smazat',confirmDelete:'Opravdu smazat toto slovíčko?',cancel:'Zrušit',close:'Zavřít',longVowels:'Dlouhá samohláska: ū = uu, ō = ou, ē = ee.',loading:'Načítám slovník…',loadError:'Slovník se nepodařilo načíst. Zkus to znovu.',saveError:'Slovíčko se nepodařilo uložit.',photoError:'Fotku se nepodařilo uložit.',emailError:'Přihlašovací odkaz se nepodařilo poslat.',speechError:'Japonská výslovnost není v tomto prohlížeči dostupná.',saved:'Uloženo.',deleted:'Slovíčko smazáno.',photoSaved:'Fotka uložena.',romaji:'Rómadži'},
-  en: {title:'Technical vocabulary',subtitle:'My work vocabulary',signInTitle:'Sign in to your dictionary',signInHelp:'I’ll send a secure sign-in link to your email.',email:'Email',sendLink:'Send sign-in link',linkSent:'The link is on its way. Open your email on this device and follow it.',signOut:'Sign out',myWords:'My vocabulary',hint:'Japanese · English · Czech. Select a word to view its description or photo.',searchLabel:'Search vocabulary',searchPlaceholder:'Search Japanese, English or Czech…',addWord:'Add a word',japanese:'Japanese · romaji',english:'English',czech:'Czech',actions:'Actions',empty:'Your dictionary is empty. Add your first word.',noResults:'No matches. Try another word.',lookupTitle:'Find a new word',lookupSubtitle:'English–Japanese dictionary · Jisho',lookupLabel:'English or Japanese term',lookupPlaceholder:'For example: voltage, bearing, fan…',search:'Search',searching:'Searching…',noJisho:'No results. Try another word or open Jisho.',jishoError:'Jisho is not responding. You can search directly on Jisho.',openJisho:'Open Jisho',details:'Jisho details',use:'Use',newWord:'New word',allLanguages:'Enter the word in all three languages.',japaneseRomaji:'Japanese in romaji',descriptionCs:'Description in Czech (optional)',descriptionEn:'Description in English (optional)',saveWord:'Save word',saving:'Saving…',listen:'Listen',noDescription:'There is no description for this word yet.',noDescriptionEn:'There is no English description for this word yet.',noDescriptionCs:'There is no Czech description for this word yet.',photoPrompt:'Add a work photo or your own image.',addPhoto:'Add image',takePhoto:'Take photo',photoLimit:'JPG, PNG, WebP or GIF · up to 8 MB.',delete:'Delete',confirmDelete:'Delete this word?',cancel:'Cancel',close:'Close',longVowels:'Long vowels: ū = uu, ō = ou, ē = ee.',loading:'Loading vocabulary…',loadError:'Could not load your vocabulary. Please try again.',saveError:'Could not save the word.',photoError:'Could not save the photo.',emailError:'Could not send the sign-in link.',speechError:'Japanese speech is not available in this browser.',saved:'Saved.',deleted:'Word deleted.',photoSaved:'Photo saved.',romaji:'Romaji'},
+  cs: {title:'Technický slovník',subtitle:'Moje slovíčka z praxe',signInTitle:'Přihlášení do slovníku',signInHelp:'Slovník můžeš používat bez účtu. Přihlášení později synchronizuje tvoje slovíčka.',email:'E-mail',sendLink:'Poslat odkaz',linkSent:'Odkaz je na cestě. Otevři e-mail na tomto zařízení a klikni na odkaz.',signOut:'Odhlásit',guestSignIn:'Přihlásit a synchronizovat',myWords:'Můj slovník',hint:'Japonsky · anglicky · česky. Klikni na slovíčko pro popis nebo fotku.',searchLabel:'Hledat ve slovníku',searchPlaceholder:'Hledej japonsky, anglicky nebo česky…',addWord:'Přidat slovíčko',japanese:'Japonsky · rómadži',english:'Anglicky',czech:'Česky',actions:'Akce',empty:'Slovník je prázdný. Přidej své první slovíčko.',noResults:'Nic jsem nenašel. Zkus jiné slovo.',lookupTitle:'Najít nové slovíčko',lookupSubtitle:'Anglicko-japonský slovník Jisho',lookupLabel:'Anglický nebo japonský výraz',lookupPlaceholder:'Např. voltage, bearing, fan…',search:'Vyhledat',searching:'Hledám…',noJisho:'Žádný výsledek. Zkus jiné slovo nebo otevři Jisho.',jishoError:'Jisho teď neodpovídá. Můžeš hledat přímo na Jisho.',openJisho:'Otevřít Jisho',details:'Detail na Jisho',use:'Použít',newWord:'Nové slovíčko',allLanguages:'Vyplň názvy ve všech třech jazycích.',japaneseRomaji:'Japonsky v rómadži',descriptionCs:'Popis česky (volitelné)',descriptionEn:'Popis anglicky (volitelné)',saveWord:'Uložit slovíčko',saving:'Ukládám…',listen:'Poslechnout',noDescription:'K tomuto slovíčku zatím není popis.',noDescriptionEn:'K tomuto slovíčku zatím není anglický popis.',noDescriptionCs:'K tomuto slovíčku zatím není český popis.',photoPrompt:'Přidej fotku z práce nebo vlastní obrázek.',addPhoto:'Přidat obrázek',takePhoto:'Vyfotit',photoLimit:'JPG, PNG, WebP nebo GIF · do 8 MB.',delete:'Smazat',confirmDelete:'Opravdu smazat toto slovíčko?',cancel:'Zrušit',close:'Zavřít',longVowels:'Dlouhá samohláska: ū = uu, ō = ou, ē = ee.',loading:'Načítám slovník…',loadError:'Slovník se nepodařilo načíst. Zkus to znovu.',saveError:'Slovíčko se nepodařilo uložit.',photoError:'Fotku se nepodařilo uložit.',emailError:'Přihlašovací odkaz se nepodařilo poslat.',speechError:'Japonská výslovnost není v tomto prohlížeči dostupná.',saved:'Uloženo.',deleted:'Slovíčko smazáno.',photoSaved:'Fotka uložena.',romaji:'Rómadži'},
+  en: {title:'Technical vocabulary',subtitle:'My work vocabulary',signInTitle:'Sign in to your dictionary',signInHelp:'You can use the dictionary without an account. Signing in later will sync your words.',email:'Email',sendLink:'Send sign-in link',linkSent:'The link is on its way. Open your email on this device and follow it.',signOut:'Sign out',guestSignIn:'Sign in & sync',myWords:'My vocabulary',hint:'Japanese · English · Czech. Select a word to view its description or photo.',searchLabel:'Search vocabulary',searchPlaceholder:'Search Japanese, English or Czech…',addWord:'Add a word',japanese:'Japanese · romaji',english:'English',czech:'Czech',actions:'Actions',empty:'Your dictionary is empty. Add your first word.',noResults:'No matches. Try another word.',lookupTitle:'Find a new word',lookupSubtitle:'English–Japanese dictionary · Jisho',lookupLabel:'English or Japanese term',lookupPlaceholder:'For example: voltage, bearing, fan…',search:'Search',searching:'Searching…',noJisho:'No results. Try another word or open Jisho.',jishoError:'Jisho is not responding. You can search directly on Jisho.',openJisho:'Open Jisho',details:'Jisho details',use:'Use',newWord:'New word',allLanguages:'Enter the word in all three languages.',japaneseRomaji:'Japanese in romaji',descriptionCs:'Description in Czech (optional)',descriptionEn:'Description in English (optional)',saveWord:'Save word',saving:'Saving…',listen:'Listen',noDescription:'There is no description for this word yet.',noDescriptionEn:'There is no English description for this word yet.',noDescriptionCs:'There is no Czech description for this word yet.',photoPrompt:'Add a work photo or your own image.',addPhoto:'Add image',takePhoto:'Take photo',photoLimit:'JPG, PNG, WebP or GIF · up to 8 MB.',delete:'Delete',confirmDelete:'Delete this word?',cancel:'Cancel',close:'Close',longVowels:'Long vowels: ū = uu, ō = ou, ē = ee.',loading:'Loading vocabulary…',loadError:'Could not load your vocabulary. Please try again.',saveError:'Could not save the word.',photoError:'Could not save the photo.',emailError:'Could not send the sign-in link.',speechError:'Japanese speech is not available in this browser.',saved:'Saved.',deleted:'Word deleted.',photoSaved:'Photo saved.',romaji:'Romaji'},
 };
 const $ = (selector) => document.querySelector(selector);
 const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, jisho:[]};
+function readLocalWords() {
+  try { const saved=JSON.parse(localStorage.getItem(LOCAL_KEY)); if(Array.isArray(saved)) return saved; } catch(error) { console.warn('Could not read local dictionary',error); }
+  return initialWords.map(word=>({...word,id:`guest:${word.id}`}));
+}
+function saveLocalWords(list=state.list) {
+  try { localStorage.setItem(LOCAL_KEY,JSON.stringify(list)); return true; }
+  catch(error) { console.error(error); showToast(t('saveError')); return false; }
+}
+state.list=readLocalWords();
 const t = (key) => words[state.language][key] || words.cs[key] || key;
 const escapes = (value='') => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const pronunciation = {voltage:'でんあつ',current:'でんりゅう',speed:'かいてんそくど',measurement:'そくてい','power-supply':'でんげん',tachometer:'かいてんけい',multimeter:'まるちめーたー',connection:'せつぞく',pq:'ふうりょうせいあつとくせい',noise:'そうおん'};
@@ -37,6 +47,7 @@ function translatePage() {
   document.title = t('title');
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   $('#email').placeholder = t('email');
+  $('#account-action').textContent = state.user ? t('signOut') : t('guestSignIn');
   $('#filter').placeholder = t('searchPlaceholder');
   $('#jisho-query').placeholder = t('lookupPlaceholder');
   document.querySelectorAll('[data-language]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.language === state.language)));
@@ -64,10 +75,37 @@ function speak(word) {
   const voice = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('ja')); if (voice) utterance.voice=voice;
   speechSynthesis.speak(utterance);
 }
+async function syncGuestWords(user) {
+  const localWords = readLocalWords();
+  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_cs,description_en,image_path').order('created_at',{ascending:true});
+  if (result.error) throw result.error;
+  const cloudWords = result.data || [];
+  const cloudTerms = new Set(cloudWords.map(w=>[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|')));
+  for (const word of localWords) {
+    const key=[word.ja,word.en,word.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|');
+    if (cloudTerms.has(key)) continue;
+    let image_path=null;
+    if (word.image_data) {
+      const response=await fetch(word.image_data); const blob=await response.blob();
+      const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg');
+      image_path=`${user.id}/${crypto.randomUUID()}.${ext}`;
+      const uploaded=await supabase.storage.from('dictionary-images').upload(image_path,blob,{upsert:false,contentType:blob.type||'image/jpeg'});
+      if(uploaded.error) throw uploaded.error;
+    }
+    const {error}=await supabase.from('dictionary_words').insert({id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_cs:word.description_cs||'',description_en:word.description_en||'',image_path});
+    if(error) throw error;
+  }
+  const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_cs,description_en,image_path').order('created_at',{ascending:true});
+  if(refreshed.error) throw refreshed.error;
+  const imageByTerm=new Map(localWords.filter(w=>w.image_data).map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w.image_data]));
+  const merged=(refreshed.data||[]).map(w=>({...w,image_data:imageByTerm.get([w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'))||null}));
+  saveLocalWords(merged);
+  return merged;
+}
 async function loadWords() {
   const profile = await supabase.from('dictionary_profiles').select('seeded').maybeSingle();
   if (profile.error) throw profile.error;
-  let seeded = profile.data?.seeded ?? false;
+  const seeded = profile.data?.seeded ?? false;
   if (!profile.data) {
     const created = await supabase.from('dictionary_profiles').insert({seeded:false});
     if (created.error && created.error.code !== '23505') throw created.error;
@@ -79,13 +117,12 @@ async function loadWords() {
     const marked = await supabase.from('dictionary_profiles').update({seeded:true}).eq('owner_id',state.user.id);
     if (marked.error) throw marked.error;
   }
-  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_cs,description_en,image_path').order('created_at',{ascending:true});
-  if (result.error) throw result.error;
-  state.list = result.data || []; renderWords();
+  state.list=await syncGuestWords(state.user);
+  renderWords();
 }
 async function enterApp(user) {
-  state.user=user; $('#auth-panel').classList.add('hidden'); $('#app-panel').classList.remove('hidden'); $('#sign-out').classList.remove('hidden');
-  $('#word-count').textContent = t('loading');
+  state.user=user; $('#auth-panel').classList.add('hidden'); $('#app-panel').classList.remove('hidden');
+  $('#word-count').textContent = t('loading'); translatePage();
   try { await loadWords(); } catch (error) { console.error(error); showToast(t('loadError')); }
 }
 async function showDetails(word) {
@@ -94,7 +131,9 @@ async function showDetails(word) {
   const emptyDescription = state.language === 'en' ? t('noDescriptionEn') : t('noDescriptionCs');
   $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(word.ja)}</h2><p class="detail-subtitle">${escapes(word.en)} · ${escapes(word.cs)}</p></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
   $('#detail-dialog').showModal();
-  if (word.image_path) {
+  if (word.image_data) {
+    $('#detail-photo').outerHTML = `<img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" />`;
+  } else if (state.user && word.image_path) {
     const {data,error} = await supabase.storage.from('dictionary-images').createSignedUrl(word.image_path,3600);
     if (!error && data?.signedUrl && state.selected?.id === word.id) $('#detail-photo').outerHTML = `<img class="photo" src="${escapes(data.signedUrl)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" />`;
   }
@@ -114,7 +153,11 @@ $('#sign-in-form').addEventListener('submit', async event => {
   if (error) { console.error(error); setMessage($('#auth-message'),error.message || t('emailError'),true); }
   else setMessage($('#auth-message'),t('linkSent'));
 });
-$('#sign-out').addEventListener('click',async()=>{await supabase.auth.signOut();state.list=[];state.user=null;$('#app-panel').classList.add('hidden');$('#auth-panel').classList.remove('hidden');$('#sign-out').classList.add('hidden');});
+$('#account-action').addEventListener('click',async()=>{
+  if(state.user){await supabase.auth.signOut();return;}
+  $('#auth-panel').classList.toggle('hidden');
+  if(!$('#auth-panel').classList.contains('hidden')){$('#auth-panel').scrollIntoView({behavior:'smooth',block:'center'});$('#email').focus();}
+});
 $('#words').addEventListener('click',event=>{
   const open=event.target.closest('[data-open]'); if(open){const word=state.list.find(w=>w.id===open.dataset.open);if(word)void showDetails(word);return;}
   const listen=event.target.closest('[data-speak]');if(listen){const word=state.list.find(w=>w.id===listen.dataset.speak);if(word)speak(word);return;}
@@ -124,17 +167,26 @@ $('#add-open').addEventListener('click',()=>{$('#word-form').reset();setMessage(
 $('#word-form').addEventListener('submit',async event=>{
   event.preventDefault(); const form=event.currentTarget; const values=Object.fromEntries(new FormData(form)); const submit=form.querySelector('[type=submit]');submit.disabled=true;submit.textContent=t('saving');
   const row={id:crypto.randomUUID(),ja:String(values.ja).trim(),en:String(values.en).trim(),cs:String(values.cs).trim(),description_cs:String(values.description_cs||'').trim(),description_en:String(values.description_en||'').trim()};
-  const result=await supabase.from('dictionary_words').insert(row).select('id,ja,en,cs,description_cs,description_en,image_path').single();
   submit.disabled=false;submit.textContent=t('saveWord');
-  if(result.error){console.error(result.error);setMessage($('#form-message'),t('saveError'),true);return;}
-  state.list.push(result.data);renderWords();$('#word-dialog').close();showToast(t('saved'));
+  if(state.user){
+    const result=await supabase.from('dictionary_words').insert(row).select('id,ja,en,cs,description_cs,description_en,image_path').single();
+    if(result.error){console.error(result.error);setMessage($('#form-message'),t('saveError'),true);return;}
+    state.list.push(result.data);
+  } else {
+    state.list.push(row); if(!saveLocalWords())return;
+  }
+  renderWords();$('#word-dialog').close();showToast(t('saved'));
 });
 async function deleteWord(id){
   const word=state.list.find(w=>w.id===id);if(!word||!confirm(t('confirmDelete')))return;
-  if(word.image_path){const removed=await supabase.storage.from('dictionary-images').remove([word.image_path]);if(removed.error)console.error(removed.error);}
-  const result=await supabase.from('dictionary_words').delete().eq('id',id);
-  if(result.error){console.error(result.error);showToast(t('saveError'));return;}
-  state.list=state.list.filter(w=>w.id!==id);renderWords();$('#detail-dialog').close();showToast(t('deleted'));
+  if(state.user){
+    if(word.image_path){const removed=await supabase.storage.from('dictionary-images').remove([word.image_path]);if(removed.error)console.error(removed.error);}
+    const result=await supabase.from('dictionary_words').delete().eq('id',id);
+    if(result.error){console.error(result.error);showToast(t('saveError'));return;}
+  }
+  state.list=state.list.filter(w=>w.id!==id);
+  if(!state.user&&!saveLocalWords())return;
+  renderWords();$('#detail-dialog').close();showToast(t('deleted'));
 }
 $('#detail-content').addEventListener('click',event=>{
   if(event.target.closest('[data-close-detail]'))$('#detail-dialog').close();
@@ -146,6 +198,18 @@ $('#detail-content').addEventListener('click',event=>{
 async function uploadPhoto(file){
   const word=state.selected;if(!file||!word)return;
   if(file.size>8*1024*1024||!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){showToast(t('photoError'));return;}
+  if(!state.user){
+    try {
+      const bitmap=await createImageBitmap(file); const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+      const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+      canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+      const image_data=canvas.toDataURL('image/jpeg',.82);
+      state.list=state.list.map(w=>w.id===word.id?{...w,image_data}:w);
+      if(!saveLocalWords())return;
+      state.selected=state.list.find(w=>w.id===word.id);await showDetails(state.selected);showToast(t('photoSaved'));
+    } catch(error) { console.error(error);showToast(t('photoError')); }
+    return;
+  }
   const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'}[file.type];const path=`${state.user.id}/${word.id}-${crypto.randomUUID()}.${ext}`;
   const uploaded=await supabase.storage.from('dictionary-images').upload(path,file,{upsert:false,contentType:file.type});
   if(uploaded.error){console.error(uploaded.error);showToast(t('photoError'));return;}
@@ -173,9 +237,12 @@ document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('cli
 
 translatePage();
 const {data:{session}}=await supabase.auth.getSession();
-if(session?.user)await enterApp(session.user);
-else {$('#auth-panel').classList.remove('hidden');$('#app-panel').classList.add('hidden');}
+if(session?.user) await enterApp(session.user);
+else {$('#app-panel').classList.remove('hidden');state.list=readLocalWords();renderWords();}
 supabase.auth.onAuthStateChange((_event,session)=>{
-  if(session?.user&&!state.user){state.user=session.user;setTimeout(()=>void enterApp(session.user),0);}
-  else if(!session?.user&&state.user){state.user=null;state.list=[];$('#app-panel').classList.add('hidden');$('#auth-panel').classList.remove('hidden');$('#sign-out').classList.add('hidden');}
+  if(session?.user&&!state.user){setTimeout(()=>void enterApp(session.user),0);}
+  else if(!session?.user&&state.user){
+    state.user=null;state.list=readLocalWords();saveLocalWords();renderWords();
+    $('#app-panel').classList.remove('hidden');$('#auth-panel').classList.add('hidden');translatePage();
+  }
 });
