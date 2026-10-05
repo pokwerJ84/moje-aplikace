@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#144bc2" />
     <title>Technický slovník</title>
     <link rel="stylesheet" href="./styles.css" />
-    <script type="module" src="./app.js?v=guest-mode-20261005"></script>
+    <script type="module" src="./app.js?v=three-language-definitions-20261005"></script>
   </head>
   <body>
     <main class="workspace">
@@ -58,12 +58,14 @@
       <footer><span>日本語 · ENGLISH · ČEŠTINA</span><span data-i18n="longVowels">Dlouhá samohláska: ū = uu, ō = ou, ē = ee.</span></footer>
     </main>
 
-    <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň názvy ve všech třech jazycích.</p></div><button class="icon-button" value="cancel" aria-label="Zavřít">×</button></div>
-      <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" required maxlength="200" /></label>
-      <label><span data-i18n="english">Anglicky</span><input name="en" required maxlength="200" /></label>
-      <label><span data-i18n="czech">Česky</span><input name="cs" required maxlength="200" /></label>
-      <label><span data-i18n="descriptionCs">Popis česky (volitelné)</span><textarea name="description_cs" maxlength="3000" rows="3"></textarea></label>
+    <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button class="icon-button" value="cancel" aria-label="Zavřít">×</button></div>
+      <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" maxlength="200" /></label>
+      <label><span data-i18n="english">Anglicky</span><input name="en" maxlength="200" /></label>
+      <label><span data-i18n="czech">Česky</span><input name="cs" maxlength="200" /></label>
+      <label><span data-i18n="descriptionJa">Popis japonsky (volitelné)</span><textarea name="description_ja" maxlength="3000" rows="3"></textarea></label>
       <label><span data-i18n="descriptionEn">Popis anglicky (volitelné)</span><textarea name="description_en" maxlength="3000" rows="3"></textarea></label>
+      <label><span data-i18n="descriptionCs">Popis česky (volitelné)</span><textarea name="description_cs" maxlength="3000" rows="3"></textarea></label>
+      <p class="hint" data-i18n="translationNote">Vyplň výraz a případně popis v jednom jazyce. Ostatní výrazy a zadaný popis se automaticky přeloží; překlad můžeš před uložením upravit. Text se odešle překladové službě.</p>
       <p id="form-message" class="message" role="alert"></p><button class="button primary" type="submit" data-i18n="saveWord">Uložit slovíčko</button>
     </form></dialog>
 
