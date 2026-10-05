@@ -70,7 +70,8 @@ function renderWords() {
 }
 function speak(word) {
   if (!('speechSynthesis' in window)) return showToast(t('speechError'));
-  const text = pronunciation[word.id] || toHiragana(word.ja) || word.ja;
+  const shortId=String(word.id).split(':').at(-1);
+  const text = pronunciation[word.id] || pronunciation[shortId] || toHiragana(word.ja) || word.ja;
   speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang='ja-JP'; utterance.rate=.86;
   const voice = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('ja')); if (voice) utterance.voice=voice;
   speechSynthesis.speak(utterance);
