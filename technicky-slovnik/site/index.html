@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#144bc2" />
     <title>Technický slovník</title>
     <link rel="stylesheet" href="./styles.css" />
-    <script src="./updater.js?v=1"></script>
-    <script type="module" src="./app.js?v=three-language-definitions-20261005-r2"></script>
+    <script src="./updater.js?v=2"></script>
+    <script type="module" src="./app.js?v=three-language-definitions-20261005-r3"></script>
   </head>
   <body>
     <main class="workspace">
@@ -59,7 +59,7 @@
       <footer><span>日本語 · ENGLISH · ČEŠTINA</span><span data-i18n="longVowels">Dlouhá samohláska: ū = uu, ō = ou, ē = ee.</span></footer>
     </main>
 
-    <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button class="icon-button" value="cancel" aria-label="Zavřít">×</button></div>
+    <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button id="word-close" class="icon-button" type="button" aria-label="Zavřít">×</button></div>
       <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" maxlength="200" /></label>
       <label><span data-i18n="english">Anglicky</span><input name="en" maxlength="200" /></label>
       <label><span data-i18n="czech">Česky</span><input name="cs" maxlength="200" /></label>
