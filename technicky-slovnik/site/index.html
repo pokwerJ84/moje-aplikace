@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#144bc2" />
+    <title>Technický slovník</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main class="workspace">
+      <header class="top">
+        <a class="brand" href="./" aria-label="Technický slovník">
+          <span class="brand-icon" aria-hidden="true">文</span>
+          <span><strong data-i18n="title">Technický slovník</strong><small data-i18n="subtitle">Moje slovíčka z praxe</small></span>
+        </a>
+        <div class="top-actions">
+          <div class="language-switch" aria-label="Language">
+            <button type="button" data-language="cs" aria-pressed="true">Česky</button>
+            <button type="button" data-language="en" aria-pressed="false">English</button>
+          </div>
+          <button id="sign-out" class="button outline hidden" type="button" data-i18n="signOut">Odhlásit</button>
+        </div>
+      </header>
+
+      <section id="auth-panel" class="panel auth-panel">
+        <h1 data-i18n="signInTitle">Přihlášení do slovníku</h1>
+        <p data-i18n="signInHelp">Pošlu ti bezpečný přihlašovací odkaz na e-mail.</p>
+        <form id="sign-in-form" class="inline-form">
+          <label class="sr-only" for="email" data-i18n="email">E-mail</label>
+          <input id="email" type="email" autocomplete="email" required placeholder="E-mail" />
+          <button class="button primary" type="submit" data-i18n="sendLink">Poslat odkaz</button>
+        </form>
+        <p id="auth-message" class="message" role="status"></p>
+      </section>
+
+      <div id="app-panel" class="hidden">
+        <section class="panel dictionary">
+          <div class="section-title"><div><h1 data-i18n="myWords">Můj slovník</h1><p class="hint" data-i18n="hint">Japonsky · anglicky · česky. Klikni na slovíčko pro popis nebo fotku.</p></div><span id="word-count" class="count">0 slovíček</span></div>
+          <div class="toolbar">
+            <label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only" data-i18n="searchLabel">Hledat ve slovníku</span><input id="filter" type="search" placeholder="Hledej japonsky, anglicky nebo česky…" /></label>
+            <button id="add-open" class="button primary" type="button"><span aria-hidden="true">＋</span><span data-i18n="addWord">Přidat slovíčko</span></button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th data-i18n="japanese">Japonsky · rómadži</th><th data-i18n="english">Anglicky</th><th data-i18n="czech">Česky</th><th><span class="sr-only" data-i18n="actions">Akce</span></th></tr></thead><tbody id="words"></tbody></table></div>
+          <p id="empty" class="empty hidden" data-i18n="empty">Slovník je prázdný. Přidej své první slovíčko.</p>
+          <p id="no-results" class="empty hidden" data-i18n="noResults">Nic jsem nenašel. Zkus jiné slovo.</p>
+        </section>
+
+        <section class="panel lookup">
+          <div><h2 data-i18n="lookupTitle">Najít nové slovíčko</h2><p data-i18n="lookupSubtitle">Anglicko-japonský slovník Jisho</p></div>
+          <form id="jisho-form" class="inline-form"><label class="sr-only" for="jisho-query" data-i18n="lookupLabel">Anglický nebo japonský výraz</label><input id="jisho-query" maxlength="100" required placeholder="Např. voltage, bearing, fan…" /><button class="button outline" type="submit" data-i18n="search">Vyhledat</button></form>
+          <p id="jisho-message" class="message" role="status"></p>
+          <div id="jisho-results" class="results"></div>
+        </section>
+      </div>
+
+      <footer><span>日本語 · ENGLISH · ČEŠTINA</span><span data-i18n="longVowels">Dlouhá samohláska: ū = uu, ō = ou, ē = ee.</span></footer>
+    </main>
+
+    <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň názvy ve všech třech jazycích.</p></div><button class="icon-button" value="cancel" aria-label="Zavřít">×</button></div>
+      <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" required maxlength="200" /></label>
+      <label><span data-i18n="english">Anglicky</span><input name="en" required maxlength="200" /></label>
+      <label><span data-i18n="czech">Česky</span><input name="cs" required maxlength="200" /></label>
+      <label><span data-i18n="descriptionCs">Popis česky (volitelné)</span><textarea name="description_cs" maxlength="3000" rows="3"></textarea></label>
+      <label><span data-i18n="descriptionEn">Popis anglicky (volitelné)</span><textarea name="description_en" maxlength="3000" rows="3"></textarea></label>
+      <p id="form-message" class="message" role="alert"></p><button class="button primary" type="submit" data-i18n="saveWord">Uložit slovíčko</button>
+    </form></dialog>
+
+    <dialog id="detail-dialog" class="dialog"><div id="detail-content"></div></dialog>
+    <input id="photo-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+    <input id="camera-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

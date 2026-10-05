@@ -1,16 +1,26 @@
-# Technický slovník
+# Technický slovník — Supabase edition
 
-Czech / English / Japanese romanized vocabulary for fan measurement training.
+Static GitHub Pages front end with Supabase Auth, a private Postgres dictionary, and private image storage.
 
-Live private app: https://jarduv-technicky-slovnik.pokwer1984.chatgpt.site
+## Publish
 
-Includes 10 starter terms, entry details, adding and deleting entries, photo upload/camera selection, and Jisho English–Japanese lookup with WanaKana romanization. Czech translations of search results are entered manually.
+GitHub Actions deploys `site/` to the repository's GitHub Pages URL. In the repository settings, select **Settings → Pages → Build and deployment → Source → GitHub Actions**. The workflow publishes the files at `https://pokwerj84.github.io/moje-aplikace/`.
 
-## Stack
-React + Vinext, Cloudflare Workers, D1 (DB), R2 (BUCKET). Source is backed up in this folder; live vocabulary and photos are stored in the app database and object storage, not GitHub. This is a server application, so GitHub Pages alone cannot run it.
+## Supabase sign-in redirect
 
-## Development
-Install with pnpm install. Use pnpm dev and pnpm build. Database schema lives in db/schema.ts; migrations in drizzle/. Configure DB and BUCKET bindings when deploying elsewhere. .openai/hosting.json identifies the existing private Site; preserve its identity when updating.
+In the `poky-reader` Supabase project, open **Authentication → URL Configuration** and add this exact address to **Redirect URLs**:
 
-## Dictionary attribution
-Search data: Jisho / JMdict, EDRDG (https://www.edrdg.org/edrdg/licence.html), CC BY-SA. API availability depends on Jisho. Kana-to-romaji conversion: WanaKana (MIT).
+`https://pokwerj84.github.io/moje-aplikace/`
+
+The app sends email sign-in links to the currently open app URL. No secret key is included in the page. The publishable key is intended for browser use; the dictionary and its image bucket are protected by row-level security policies tied to the signed-in user.
+
+## Data
+
+- `public.dictionary_words`: Japanese, English, Czech, descriptions in both Czech and English, and a private image path.
+- `public.dictionary_profiles`: records whether the starter vocabulary has already been added for that user.
+- `dictionary-images`: private image bucket (8 MB per image).
+- SQL migrations are in `supabase/migrations/`.
+
+## Features
+
+Japanese → English → Czech word order, Czech/English interface switch, search across saved words and descriptions, Japanese speech, Jisho lookup, separate Czech and English descriptions, and private photo upload/camera capture.
