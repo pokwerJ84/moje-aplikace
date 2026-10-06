@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#144bc2" />
     <title>Technický slovník</title>
-    <link rel="stylesheet" href="./styles.css?v=mobile-czech-layout-20261006-r2" />
-    <script src="./updater.js?v=4"></script>
-    <script type="module" src="./app.js?v=mobile-czech-layout-20261006-r2"></script>
+    <link rel="stylesheet" href="./styles.css?v=voice-search-mobile-20261006-r1" />
+    <script src="./updater.js?v=5"></script>
+    <script type="module" src="./app.js?v=voice-search-mobile-20261006-r1"></script>
   </head>
   <body>
     <main class="workspace">
@@ -40,26 +40,23 @@
         <section class="panel dictionary">
           <div class="section-title"><div><h1 data-i18n="myWords">Můj slovník</h1><p class="hint" data-i18n="hint">Japonsky · anglicky · česky. Klikni na slovíčko pro popis nebo fotku.</p></div><span id="word-count" class="count">0 slovíček</span></div>
           <div class="toolbar">
-            <label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only" data-i18n="searchLabel">Hledat ve slovníku</span><input id="filter" type="search" placeholder="Hledej japonsky, anglicky nebo česky…" /></label>
+            <div class="search-box"><label class="sr-only" for="filter" data-i18n="searchLabel">Hledat japonsky, anglicky nebo česky</label><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Hledej japonsky, anglicky nebo česky…" /><button id="jisho-search" class="search-online" type="button" data-i18n="searchOnline">Jisho</button></div>
             <button id="add-open" class="button primary" type="button"><span aria-hidden="true">＋</span><span data-i18n="addWord">Přidat slovíčko</span></button>
           </div>
+          <div class="online-results"><p id="jisho-message" class="message" role="status"></p><div id="jisho-results" class="results"></div></div>
           <div class="table-wrap"><table><thead><tr><th data-i18n="japanese">Japonsky · rómadži</th><th data-i18n="english">Anglicky</th><th class="czech-column" data-i18n="czech">Česky</th><th><span class="sr-only" data-i18n="actions">Akce</span></th></tr></thead><tbody id="words"></tbody></table></div>
           <p id="empty" class="empty hidden" data-i18n="empty">Slovník je prázdný. Přidej své první slovíčko.</p>
           <p id="no-results" class="empty hidden" data-i18n="noResults">Nic jsem nenašel. Zkus jiné slovo.</p>
         </section>
 
-        <section class="panel lookup">
-          <div><h2 data-i18n="lookupTitle">Najít nové slovíčko</h2><p data-i18n="lookupSubtitle">Anglicko-japonský slovník Jisho</p></div>
-          <form id="jisho-form" class="inline-form"><label class="sr-only" for="jisho-query" data-i18n="lookupLabel">Anglický nebo japonský výraz</label><input id="jisho-query" maxlength="100" required placeholder="Např. voltage, bearing, fan…" /><button class="button outline" type="submit" data-i18n="search">Vyhledat</button></form>
-          <p id="jisho-message" class="message" role="status"></p>
-          <div id="jisho-results" class="results"></div>
-        </section>
+
       </div>
 
       <footer><span>日本語 · ENGLISH · ČEŠTINA</span><span data-i18n="longVowels">Dlouhá samohláska: ū = uu, ō = ou, ē = ee.</span></footer>
     </main>
 
     <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button id="word-close" class="icon-button" type="button" aria-label="Zavřít">×</button></div>
+      <div class="dictation-tools"><label for="dictation-language"><span data-i18n="dictationLanguage">Jazyk diktování</span><select id="dictation-language"><option value="ja-JP">日本語</option><option value="en-US">English</option><option value="cs-CZ">Čeština</option></select></label><div class="dictation-buttons"><button id="dictate-word" class="button outline" type="button" data-i18n="dictateWord">🎙 Nadiktovat slovo</button><button id="dictate-description" class="button outline" type="button" data-i18n="dictateDescription">🎙 Nadiktovat popis</button></div></div>
       <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" maxlength="200" /></label>
       <label><span data-i18n="english">Anglicky</span><input name="en" maxlength="200" /></label>
       <label><span data-i18n="czech">Česky</span><input name="cs" maxlength="200" /></label>
