@@ -28,7 +28,7 @@ const words = {
   en: {title:'Technical vocabulary',subtitle:'My work vocabulary',signInTitle:'Sign in to your dictionary',signInHelp:'You can use the dictionary without an account. Signing in later will sync your words.',email:'Email',sendLink:'Send sign-in link',linkSent:'The link is on its way. Open your email on this device and follow it.',signOut:'Sign out',guestSignIn:'Sign in & sync',myWords:'My vocabulary',hint:'Japanese · English · Czech. Select a word to view its description or photo.',searchLabel:'Search vocabulary',searchPlaceholder:'Search Japanese, English or Czech…',addWord:'Add a word',japanese:'Japanese',english:'English',czech:'Czech',actions:'Actions',empty:'Your dictionary is empty. Add your first word.',noResults:'No matches. Try another word.',lookupTitle:'Find a new word',lookupSubtitle:'English–Japanese dictionary · Jisho',lookupLabel:'English or Japanese term',lookupPlaceholder:'For example: voltage, bearing, fan…',search:'Search',searching:'Searching…',noJisho:'No results. Try another word or open Jisho.',jishoError:'Jisho is not responding. You can search directly on Jisho.',openJisho:'Open Jisho',details:'Jisho details',use:'Use',newWord:'New word',allLanguages:'Enter the word and, if you like, its description in just one language.',japaneseRomaji:'Japanese',descriptionJa:'Description in Japanese (optional)',descriptionCs:'Description in Czech (optional)',descriptionEn:'Description in English (optional)',saveWord:'Save word',saving:'Saving…',listen:'Listen',translationNote:'The term and description will be translated into the other languages. Text is sent to a translation service; review the result before saving.',enterOne:'Enter the term in at least one language.',translationError:'Could not get a translation. Check your connection or try shorter text.',noDescription:'There is no description in this language yet.',noDescriptionEn:'There is no English description for this word yet.',noDescriptionCs:'There is no Czech description for this word yet.',photoPrompt:'Add a work photo or your own image.',addPhoto:'Add image',takePhoto:'Take photo',photoLimit:'JPG, PNG, WebP or GIF · up to 8 MB.',delete:'Delete',confirmDelete:'Delete this word?',cancel:'Cancel',close:'Close',longVowels:'Long vowels: ū = uu, ō = ou, ē = ee.',loading:'Loading vocabulary…',loadError:'Could not load your vocabulary. Please try again.',saveError:'Could not save the word.',photoError:'Could not save the photo.',emailError:'Could not send the sign-in link.',speechError:'Japanese speech is not available in this browser.',saved:'Saved.',deleted:'Word deleted.',photoSaved:'Photo saved.',romaji:'Romaji'},
 };
 const $ = (selector) => document.querySelector(selector);
-const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, jisho:[]};
+const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, detailLanguage:'cs', jisho:[]};
 function readLocalWords() {
   try { const saved=JSON.parse(localStorage.getItem(LOCAL_KEY)); if(Array.isArray(saved)) return saved; } catch(error) { console.warn('Could not read local dictionary',error); }
   return initialWords.map(word=>({...word,id:`guest:${word.id}`}));
@@ -75,7 +75,7 @@ function translatePage() {
   document.querySelectorAll('[data-language]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.language === state.language)));
   renderWords();
   renderJisho();
-  if (state.selected && $('#detail-dialog').open) showDetails(state.selected);
+  if (state.selected && $('#detail-dialog').open) showDetails(state.selected,state.detailLanguage);
 }
 function showToast(message) {
   const toast = $('#toast'); toast.textContent = message; toast.classList.add('visible');
@@ -86,7 +86,7 @@ function renderWords() {
   const term = state.query.trim().toLocaleLowerCase();
   const filtered = state.list.filter(w => [w.ja,w.en,w.cs,w.description_ja,w.description_en,w.description_cs].some(value => String(value || '').toLocaleLowerCase().includes(term)));
   $('#word-count').textContent = `${filtered.length} ${state.language === 'en' ? (filtered.length === 1 ? 'word' : 'words') : 'slovíček'}`;
-  $('#words').innerHTML = filtered.map((w,i) => `<tr><td><div class="jp-cell"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja)}</button><button class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}">🔊</button></div></td><td><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en)}</button></td><td><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="cs">${escapes(w.cs)}</button></td><td><button class="delete" data-delete="${escapes(w.id)}" title="${escapes(t('delete'))}" aria-label="${escapes(t('delete'))} ${escapes(w.ja)}">⌫</button></td></tr>`).join('');
+  $('#words').innerHTML = filtered.map((w,i) => `<tr><td><div class="jp-cell"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja)}</button><button class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}">🔊</button></div></td><td><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en)}</button></td><td class="czech-column"><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="cs">${escapes(w.cs)}</button></td><td><button class="delete" data-delete="${escapes(w.id)}" title="${escapes(t('delete'))}" aria-label="${escapes(t('delete'))} ${escapes(w.ja)}">⌫</button></td></tr>`).join('');
   $('#empty').classList.toggle('hidden', !!state.list.length);
   $('#no-results').classList.toggle('hidden', !state.list.length || !!filtered.length);
 }
@@ -150,9 +150,12 @@ async function enterApp(user) {
 }
 async function showDetails(word, language=state.language) {
   state.selected=word;
+  state.detailLanguage=language;
   const description = word[`description_${language}`];
   const emptyDescription = t('noDescription');
-  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(word.ja)}</h2><p class="detail-subtitle">${escapes(word.en)} · ${escapes(word.cs)}</p></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
+  const term=word[language]||word.ja;
+  const otherTerms=[['ja',word.ja],['en',word.en],['cs',word.cs]].filter(([lang])=>lang!==language).map(([lang,value])=>`<button class="detail-term" type="button" data-description-lang="${lang}"><small>${escapes(t(lang==='ja'?'japanese':lang==='en'?'english':'czech'))}</small><strong>${escapes(value)}</strong></button>`).join('');
+  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
   $('#detail-dialog').showModal();
   if (word.image_data) {
     $('#detail-photo').outerHTML = `<img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" />`;
@@ -221,6 +224,7 @@ async function deleteWord(id){
   renderWords();$('#detail-dialog').close();showToast(t('deleted'));
 }
 $('#detail-content').addEventListener('click',event=>{
+  const term=event.target.closest('[data-description-lang]');if(term&&state.selected){void showDetails(state.selected,term.dataset.descriptionLang);return;}
   if(event.target.closest('[data-close-detail]'))$('#detail-dialog').close();
   if(event.target.closest('[data-detail-speak]')&&state.selected)speak(state.selected);
   if(event.target.closest('[data-upload="photo"]'))$('#photo-file').click();
