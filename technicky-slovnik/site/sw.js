@@ -1,7 +1,7 @@
-const VERSION = "v8";
+const VERSION = "v9";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
-const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js"];
+const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
