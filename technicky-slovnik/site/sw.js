@@ -1,4 +1,4 @@
-const VERSION = "v4";
+const VERSION = "v5";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
 const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js"];
@@ -38,7 +38,13 @@ async function networkFirst(request) {
 async function navigationNetworkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
-    const response = await fetch(request, { cache: "no-store" });
+    const freshUrl = new URL(request.url);
+    freshUrl.searchParams.set("__app_refresh", String(Date.now()));
+    const response = await fetch(freshUrl, {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "text/html" }
+    });
     if (response.ok) await cache.put("./index.html", response.clone());
     return response;
   } catch (error) {
