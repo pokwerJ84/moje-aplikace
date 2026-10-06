@@ -1,7 +1,7 @@
-const VERSION = "v9";
+const VERSION = "v10";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
-const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js", "./icon.svg"];
+const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js", "./icon.svg", "./theme.js", "./dark.css", "./apple-touch-icon-v10.png", "./icon-192-v10.png", "./icon-512-v10.png", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
@@ -68,3 +68,4 @@ self.addEventListener("message", event => {
   const data = event.data || {};
   if (data.type === "SKIP_WAITING") self.skipWaiting();
 });
+
