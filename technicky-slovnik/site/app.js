@@ -90,6 +90,8 @@ function renderWords() {
   $('#no-results').classList.toggle('hidden', !state.list.length || !!filtered.length);
 }
 let activeUtterance = null;
+let speechVoices = window.speechSynthesis?.getVoices() || [];
+window.speechSynthesis?.addEventListener('voiceschanged',()=>{speechVoices=window.speechSynthesis.getVoices();});
 function speak(word) {
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return showToast(t('speechError'));
   const shortId=String(word.id).split(':').at(-1);
@@ -98,7 +100,7 @@ function speak(word) {
   engine.cancel();
   activeUtterance = new SpeechSynthesisUtterance(text);
   activeUtterance.lang='ja-JP'; activeUtterance.rate=.86;
-  const voice=engine.getVoices().find(v=>/^ja(?:-|$)/i.test(v.lang));
+  const voice=(speechVoices.length?speechVoices:engine.getVoices()).find(v=>/^ja(?:-|$)/i.test(v.lang));
   if(voice) activeUtterance.voice=voice;
   activeUtterance.onend=()=>{activeUtterance=null;};
   activeUtterance.onerror=event=>{activeUtterance=null;if(!['canceled','interrupted'].includes(event.error))showToast(t('speechError'));};
