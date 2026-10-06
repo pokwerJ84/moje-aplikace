@@ -7,7 +7,7 @@ const LOCAL_KEY = 'technical-dictionary-local-v1';
 const SUPABASE_URL = 'https://pornzqperiptczusueso.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__4347c8h__yHW49VfXmTfw_9XnTC--n';
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
+  auth: { persistSession: true, storage: window.localStorage, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
 });
 
 const initialWords = [
@@ -83,7 +83,7 @@ function showToast(message) {
 function setMessage(el, message, error=false) { el.textContent = message; el.classList.toggle('error', error); }
 function renderWords() {
   const term = state.query.trim().toLocaleLowerCase();
-  const filtered = state.list.filter(w => [w.ja,w.en,w.cs,w.description_ja,w.description_en,w.description_cs].some(value => String(value || '').toLocaleLowerCase().includes(term)));
+  const filtered = state.list.filter(w => [w.ja,w.en,w.cs].some(value => String(value || '').toLocaleLowerCase().includes(term)));
   $('#word-count').textContent = `${filtered.length} ${state.language === 'en' ? (filtered.length === 1 ? 'word' : 'words') : 'slovíček'}`;
   $('#words').innerHTML = filtered.map((w,i) => `<tr><td><div class="jp-cell"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja)}</button><button class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}">🔊</button></div></td><td><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en)}</button></td><td class="czech-column"><button class="word-name" data-open="${escapes(w.id)}" data-detail-lang="cs">${escapes(w.cs)}</button></td><td><button class="delete" data-delete="${escapes(w.id)}" title="${escapes(t('delete'))}" aria-label="${escapes(t('delete'))} ${escapes(w.ja)}">⌫</button></td></tr>`).join('');
   $('#empty').classList.toggle('hidden', !!state.list.length);
@@ -101,7 +101,7 @@ function speak(word) {
   const voice=engine.getVoices().find(v=>/^ja(?:-|$)/i.test(v.lang));
   if(voice) activeUtterance.voice=voice;
   activeUtterance.onend=()=>{activeUtterance=null;};
-  activeUtterance.onerror=()=>{activeUtterance=null;showToast(t('speechError'));};
+  activeUtterance.onerror=event=>{activeUtterance=null;if(!['canceled','interrupted'].includes(event.error))showToast(t('speechError'));};
   engine.resume();
   engine.speak(activeUtterance);
 }
