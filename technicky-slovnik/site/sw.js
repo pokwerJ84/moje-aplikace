@@ -1,4 +1,4 @@
-const VERSION = "v5";
+const VERSION = "v6";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
 const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./updater.js"];
