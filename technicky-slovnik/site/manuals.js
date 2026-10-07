@@ -14,7 +14,9 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
     $('#manual-status').textContent=loadFailed?t('loadError'):getUser()?t('cloud'):t('local');
     const q=$('#manual-search').value.trim().toLocaleLowerCase();
     const filtered=list.filter(r=>[r.ja,r.en,r.model,r.description,...r.steps.map(s=>s.title+' '+s.text)].join(' ').toLocaleLowerCase().includes(q));
-    $('#manual-list').innerHTML=filtered.map(r=>`<button type="button" class="manual-card ${!r.ja.trim()||!r.en.trim()?'incomplete':''}" data-manual-open="${esc(r.id)}"><small>${t(r.kind)} · ${esc(r.model)}</small><strong>${esc(r.ja||'—')}</strong><strong>${esc(r.en||'—')}</strong><p>${esc(r.description.slice(0,160))}</p><span>${r.steps.length} ${t('steps')} · ${r.photos.length} ${t('photos')}</span>${!r.ja.trim()||!r.en.trim()?`<small class="missing-label">${t('missing')}</small>`:''}</button>`).join('')||`<p class="hint">${t(list.length?'noResults':'empty')}</p>`;
+    $('#manual-list').innerHTML=filtered.map(r=>`<button type="button" class="manual-card ${!r.ja.trim()||!r.en.trim()?'incomplete':''}" data-manual-open="${esc(r.id)}"><small class="manual-kind">${t(r.kind)}${r.model?' · '+esc(r.model):''}</small><div class="manual-card-title">${names(r).map(n=>`<strong>${esc(n)}</strong>`).join('')||`<strong>${esc(r.model)}</strong>`}</div>${r.description?`<p>${esc(r.description.slice(0,160))}</p>`:''}<div class="manual-meta"><span>${stepCount(r.steps.length)}</span><span>${photoCount(r.photos.length)}</span></div>${!r.ja.trim()||!r.en.trim()?`<small class="missing-label">${t('missing')}</small>`:''}</button>`).join('')||`<p class="empty">${t(list.length?'noResults':'empty')}</p>`;
+    $('#manual-example').hidden=list.length>0;
+
   }
   async function uploadPending(row,uploaded){
     const photos=[];
@@ -47,11 +49,18 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
     }catch(error){console.error(error);loadFailed=true;render()}
   }
   async function signedPhoto(photo){if(photo.data)return photo.data;if(!photo.path)return '';const {data,error}=await supabase.storage.from('dictionary-images').createSignedUrl(photo.path,3600);if(error)throw error;return data.signedUrl}
+  // Older guides stored the instrument image as an unassigned gallery photo.
+  const coverPhoto=row=>row.photos.find(p=>p.cover)||row.photos.find(p=>!p.stepId);
+  const stepCount=n=>getLanguage()==='cs'?`${n} kroků`:`${n} steps`;
+  const photoCount=n=>getLanguage()==='cs'?`${n} fotek`:`${n} photos`;
+  const names=row=>[row.ja,row.en].filter(v=>v?.trim());
   const viewPhotos=photos=>photos.map(p=>`<figure><div data-manual-photo="${esc(p.id)}"></div><figcaption>${esc(p.caption)}</figcaption></figure>`).join('');
   const editPhotos=photos=>photos.map(p=>`<figure><div data-draft-photo="${esc(p.id)}">${p.data?`<img src="${esc(p.data)}" alt="" />`:''}</div><input data-photo-caption="${esc(p.id)}" maxlength="500" placeholder="${t('caption')}" value="${esc(p.caption)}" /><button type="button" class="button outline" data-photo-remove="${esc(p.id)}">${t('remove')}</button></figure>`).join('');
   async function show(row){
     const root=$('#manual-detail-content');
-    root.innerHTML=`<div class="dialog-heading"><div><small>${t(row.kind)} · ${esc(row.model)}</small><h2>${esc(row.ja||'—')}</h2><h3>${esc(row.en||'—')}</h3></div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div><div class="manual-cover">${viewPhotos(row.photos.filter(p=>p.cover))}</div><p class="manual-text">${esc(row.description)}</p><h3>${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><strong>${esc(s.title)}</strong><p class="manual-text">${esc(s.text)}</p><div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></li>`).join('')}</ol><div class="manual-gallery">${viewPhotos(row.photos.filter(p=>!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions"><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
+    const cover=coverPhoto(row);
+    root.innerHTML=`<div class="dialog-heading manual-detail-heading"><div><small class="manual-kind">${t(row.kind)}${row.model?' · '+esc(row.model):''}</small>${names(row).map((n,i)=>`<${i?'h3':'h2'}>${esc(n)}</${i?'h3':'h2'}>`).join('')||`<h2>${esc(row.model)}</h2>`}</div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div>${cover?`<div class="manual-cover">${viewPhotos([cover])}</div>`:''}${row.description?`<p class="manual-text manual-description">${esc(row.description)}</p>`:''}${row.steps.length?`<h3 class="manual-section-heading">${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><span class="manual-step-number">${i+1}</span><div class="manual-step-body">${s.title?`<strong>${esc(s.title)}</strong>`:`<strong>${t('step')} ${i+1}</strong>`}${s.text?`<p class="manual-text">${esc(s.text)}</p>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></div></li>`).join('')}</ol>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p!==cover&&!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions manual-detail-actions"><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
+
     $('#manual-detail').showModal();
     for(const photo of row.photos){try{const url=await signedPhoto(photo);const target=[...root.querySelectorAll('[data-manual-photo]')].find(e=>e.dataset.manualPhoto===photo.id);if(target)target.innerHTML=`<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="${esc(photo.caption)}" /></a>`}catch{toast(t('photoError'))}}
   }
@@ -68,6 +77,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
   }
   function edit(row){
     draft=structuredClone(row||{id:crypto.randomUUID(),kind:'instrument',ja:'',en:'',model:'',description:'',steps:[],photos:[]});
+    const cover=coverPhoto(draft);if(cover)cover.cover=true;
     draft.steps=draft.steps.map((step,i)=>({...step,id:step.id||`legacy-step-${i}`}));
     photoStep=null;
     $('#manual-form').reset();for(const k of ['kind','ja','en','model','description'])$('#manual-form').elements[k].value=draft[k];
