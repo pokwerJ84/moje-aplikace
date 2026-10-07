@@ -82,6 +82,7 @@ function updateAccountStatus(){
   $('#account-status').textContent=state.user ? `${t('signedIn')} ${state.user.email || ''}` : t('guestStatus');
   $('#account-status').classList.toggle('is-signed-in',!!state.user);
   $('#auth-submit').textContent=t(state.authMode==='register'?'register':'signIn');
+  $('#auth-register').textContent=t(state.authMode==='register'?'signIn':'register');
   const photos=state.list.filter(w=>w.image_data||w.image_path).length;
   $('#sync-status').textContent=state.sync==='loading'?t('syncing'):state.sync==='error'?t('loadError'):`${t(state.user?'synced':'localOnly')} · ${photos} ${state.language==='en'?'photos':'fotek'}`;
 }
@@ -123,10 +124,11 @@ async function syncGuestWords(user) {
   const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').order('created_at',{ascending:true});
   if (result.error) throw result.error;
   const cloudWords = result.data || [];
-  const cloudTerms = new Set(cloudWords.map(w=>[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|')));
+  const cloudByTerm = new Map(cloudWords.map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w]));
   for (const word of localWords) {
     const key=[word.ja,word.en,word.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|');
-    if (cloudTerms.has(key)) continue;
+    const existing=cloudByTerm.get(key);
+    if(existing&&(!word.image_data||existing.image_path))continue;
     let image_path=null;
     if (word.image_data) {
       const response=await fetch(word.image_data); const blob=await response.blob();
@@ -135,7 +137,8 @@ async function syncGuestWords(user) {
       const uploaded=await supabase.storage.from('dictionary-images').upload(image_path,blob,{upsert:false,contentType:blob.type||'image/jpeg'});
       if(uploaded.error) throw uploaded.error;
     }
-    const {error}=await supabase.from('dictionary_words').insert({id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path});
+    const row={id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path};
+    const {error}=existing ? await supabase.from('dictionary_words').update({image_path}).eq('id',existing.id) : await supabase.from('dictionary_words').insert(row);
     if(error) throw error;
   }
   const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').order('created_at',{ascending:true});
@@ -286,7 +289,7 @@ async function uploadPhoto(file){
       const image_data=canvas.toDataURL('image/jpeg',.82);
       state.list=state.list.map(w=>w.id===word.id?{...w,image_data}:w);
       if(!saveLocalWords())return;
-      state.selected=state.list.find(w=>w.id===word.id);await showDetails(state.selected);showToast(t('photoSaved'));
+      state.selected=state.list.find(w=>w.id===word.id);renderWords();await showDetails(state.selected,state.detailLanguage);showToast(t('photoSaved'));
     } catch(error) { console.error(error);showToast(t('photoError')); }
     return;
   }
@@ -296,7 +299,7 @@ async function uploadPhoto(file){
   const updated=await supabase.from('dictionary_words').update({image_path:path}).eq('id',word.id).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').single();
   if(updated.error){console.error(updated.error);await supabase.storage.from('dictionary-images').remove([path]);showToast(t('photoError'));return;}
   if(word.image_path)await supabase.storage.from('dictionary-images').remove([word.image_path]);
-  state.list=state.list.map(w=>w.id===word.id?updated.data:w);await showDetails(updated.data);showToast(t('photoSaved'));
+  state.list=state.list.map(w=>w.id===word.id?updated.data:w);saveLocalWords();renderWords();await showDetails(updated.data);showToast(t('photoSaved'));
 }
 $('#photo-file').addEventListener('change',event=>{void uploadPhoto(event.target.files?.[0]);event.target.value='';});
 $('#camera-file').addEventListener('change',event=>{void uploadPhoto(event.target.files?.[0]);event.target.value='';});
