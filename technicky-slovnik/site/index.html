@@ -10,10 +10,10 @@
     <script src="./theme.js?v=10"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=red-book-20261006-r1" />
-    <link rel="stylesheet" href="./styles.css?v=dark-mode-20261006-v10" />
+    <link rel="stylesheet" href="./styles.css?v=password-login-20261007-v11" />
     <link rel="stylesheet" href="./dark.css?v=10" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=voice-search-mobile-20261006-r3"></script>
+    <script type="module" src="./app.js?v=password-login-20261007-v11"></script>
   </head>
   <body>
     <main class="workspace">
@@ -32,13 +32,22 @@
         </div>
       </header>
 
+      <p id="account-status" class="account-status" role="status">Kontroluji přihlášení…</p>
       <section id="auth-panel" class="panel auth-panel hidden">
         <h1 data-i18n="signInTitle">Přihlášení do slovníku</h1>
         <p data-i18n="signInHelp">Slovník můžeš používat bez účtu. Přihlášení později synchronizuje tvoje slovíčka.</p>
-        <form id="sign-in-form" class="inline-form">
-          <label class="sr-only" for="email" data-i18n="email">E-mail</label>
-          <input id="email" type="email" autocomplete="email" required placeholder="E-mail" />
-          <button class="button primary" type="submit" data-i18n="sendLink">Poslat odkaz</button>
+        <form id="sign-in-form" class="password-form">
+          <label for="email" data-i18n="email">E-mail</label>
+          <input id="email" type="email" autocomplete="username" required placeholder="E-mail" />
+          <label for="password" data-i18n="password">Heslo</label>
+          <input id="password" type="password" autocomplete="current-password" required minlength="8" />
+          <button id="auth-submit" class="button primary" type="submit" data-i18n="signIn">Přihlásit se</button>
+        </form>
+        <div class="auth-links"><button id="auth-register" class="button outline" type="button" data-i18n="register">Vytvořit účet</button><button id="auth-reset" class="button outline" type="button" data-i18n="forgotPassword">Zapomenuté heslo</button></div>
+        <form id="password-form" class="password-form hidden">
+          <label for="new-password" data-i18n="newPassword">Nové heslo</label>
+          <input id="new-password" type="password" autocomplete="new-password" minlength="8" required />
+          <button class="button primary" type="submit" data-i18n="savePassword">Uložit heslo</button>
         </form>
         <p id="auth-message" class="message" role="status"></p>
       </section>
@@ -50,7 +59,7 @@
             <div class="search-box"><label class="sr-only" for="filter" data-i18n="searchLabel">Hledat japonsky, anglicky nebo česky</label><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Hledej japonsky, anglicky nebo česky…" /><button id="jisho-search" class="search-online" type="button" data-i18n="searchOnline">Jisho</button></div>
             <button id="add-open" class="button primary" type="button"><span aria-hidden="true">＋</span><span data-i18n="addWord">Přidat slovíčko</span></button>
           </div>
-          <div class="online-results"><p id="jisho-message" class="message" role="status"></p><div id="jisho-results" class="results"></div></div>
+          <p id="sync-status" class="sync-status" role="status"></p><div class="online-results"><p id="jisho-message" class="message" role="status"></p><div id="jisho-results" class="results"></div></div>
           <div class="table-wrap"><table><thead><tr><th data-i18n="japanese">Japonsky · rómadži</th><th data-i18n="english">Anglicky</th><th class="czech-column" data-i18n="czech">Česky</th><th><span class="sr-only" data-i18n="actions">Akce</span></th></tr></thead><tbody id="words"></tbody></table></div>
           <p id="empty" class="empty hidden" data-i18n="empty">Slovník je prázdný. Přidej své první slovíčko.</p>
           <p id="no-results" class="empty hidden" data-i18n="noResults">Nic jsem nenašel. Zkus jiné slovo.</p>
