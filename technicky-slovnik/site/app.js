@@ -6,6 +6,7 @@ import { toHiragana, toRomaji } from 'https://esm.sh/wanakana@5.3.1';
 const LOCAL_KEY = 'technical-dictionary-local-v1';
 const SUPABASE_URL = 'https://pornzqperiptczusueso.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__4347c8h__yHW49VfXmTfw_9XnTC--n';
+let passwordRecovery = new URLSearchParams(location.search).get('recovery') === '1' || new URLSearchParams(location.hash.slice(1)).get('type') === 'recovery';
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, storage: window.localStorage, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
 });
@@ -169,7 +170,7 @@ async function loadWords() {
 async function enterApp(user) {
   if(state.loadingUser===user.id)return;
   state.loadingUser=user.id;state.user=user;state.sync='loading';
-  $('#auth-panel').classList.add('hidden');$('#app-panel').classList.remove('hidden');translatePage();
+  if(passwordRecovery)showPasswordRecovery();else $('#auth-panel').classList.add('hidden');$('#app-panel').classList.remove('hidden');translatePage();
   try { await loadWords();state.sync='ready'; }
   catch(error){console.error(error);state.sync='error';showToast(t('loadError'));}
   finally{state.loadingUser=null;updateAccountStatus();}
@@ -222,7 +223,7 @@ $('#auth-reset').addEventListener('click',async()=>{
 });
 $('#password-form').addEventListener('submit',async event=>{
   event.preventDefault();event.submitter.disabled=true;
-  try{const {error}=await supabase.auth.updateUser({password:$('#new-password').value});if(error)throw error;$('#new-password').value='';$('#auth-panel').classList.add('hidden');$('#sign-in-form').classList.remove('hidden');$('.auth-links').classList.remove('hidden');$('#password-form').classList.add('hidden');history.replaceState({},'',location.pathname);showToast(t('passwordSaved'));}
+  try{const {error}=await supabase.auth.updateUser({password:$('#new-password').value});if(error)throw error;passwordRecovery=false;$('#new-password').value='';$('#auth-panel').classList.add('hidden');$('#sign-in-form').classList.remove('hidden');$('.auth-links').classList.remove('hidden');$('#password-form').classList.add('hidden');history.replaceState({},'',location.pathname);showToast(t('passwordSaved'));}
   catch(error){setMessage($('#auth-message'),error.message,true);}finally{event.submitter.disabled=false;}
 });
 $('#account-action').addEventListener('click',async()=>{
@@ -339,15 +340,29 @@ $('#jisho-results').addEventListener('click',event=>{
 });
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();}));
 
+function showPasswordRecovery() {
+  passwordRecovery=true;
+  $('#auth-panel').classList.remove('hidden');
+  $('#sign-in-form').classList.add('hidden');
+  $('.auth-links').classList.add('hidden');
+  $('#password-form').classList.remove('hidden');
+  $('#auth-panel').scrollIntoView({behavior:'smooth',block:'center'});
+  $('#new-password').focus({preventScroll:true});
+}
 translatePage();
-const {data:{session}}=await supabase.auth.getSession();
-if(session?.user) {await enterApp(session.user);if(new URLSearchParams(location.search).get('recovery')==='1'){$('#auth-panel').classList.remove('hidden');$('#sign-in-form').classList.add('hidden');$('.auth-links').classList.add('hidden');$('#password-form').classList.remove('hidden');}}
-else {$('#app-panel').classList.remove('hidden');state.list=readLocalWords();renderWords();}
+// Subscribe before getSession: the initial PKCE exchange can emit recovery immediately.
 supabase.auth.onAuthStateChange((_event,session)=>{
-  if(_event==='PASSWORD_RECOVERY'){state.user=session?.user||null;$('#auth-panel').classList.remove('hidden');$('#sign-in-form').classList.add('hidden');$('.auth-links').classList.add('hidden');$('#password-form').classList.remove('hidden');updateAccountStatus();return;}
+  if(_event==='PASSWORD_RECOVERY'){
+    state.user=session?.user||null;showPasswordRecovery();updateAccountStatus();
+    if(session?.user)setTimeout(()=>void enterApp(session.user),0);
+    return;
+  }
   if(session?.user&&state.user?.id!==session.user.id){setTimeout(()=>void enterApp(session.user),0);}
   else if(!session?.user&&state.user){
     state.user=null;state.sync='';state.list=readLocalWords();renderWords();
     $('#app-panel').classList.remove('hidden');$('#auth-panel').classList.add('hidden');translatePage();
   }
 });
+const {data:{session}}=await supabase.auth.getSession();
+if(session?.user)await enterApp(session.user);
+else {$('#app-panel').classList.remove('hidden');state.list=readLocalWords();renderWords();}
