@@ -51,8 +51,8 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
   async function signedPhoto(photo){if(photo.data)return photo.data;if(!photo.path)return '';const {data,error}=await supabase.storage.from('dictionary-images').createSignedUrl(photo.path,3600);if(error)throw error;return data.signedUrl}
   // Older guides stored the instrument image as an unassigned gallery photo.
   const coverPhoto=row=>row.photos.find(p=>p.cover)||row.photos.find(p=>!p.stepId);
-  const stepCount=n=>getLanguage()==='cs'?`${n} kroků`:`${n} steps`;
-  const photoCount=n=>getLanguage()==='cs'?`${n} fotek`:`${n} photos`;
+  const stepCount=n=>`${n} ${getLanguage()==='cs'?(n===1?'krok':n>=2&&n<=4?'kroky':'kroků'):(n===1?'step':'steps')}`;
+  const photoCount=n=>`${n} ${getLanguage()==='cs'?(n===1?'fotka':n>=2&&n<=4?'fotky':'fotek'):(n===1?'photo':'photos')}`;
   const names=row=>[row.ja,row.en].filter(v=>v?.trim());
   const viewPhotos=photos=>photos.map(p=>`<figure><div data-manual-photo="${esc(p.id)}"></div><figcaption>${esc(p.caption)}</figcaption></figure>`).join('');
   const editPhotos=photos=>photos.map(p=>`<figure><div data-draft-photo="${esc(p.id)}">${p.data?`<img src="${esc(p.data)}" alt="" />`:''}</div><input data-photo-caption="${esc(p.id)}" maxlength="500" placeholder="${t('caption')}" value="${esc(p.caption)}" /><button type="button" class="button outline" data-photo-remove="${esc(p.id)}">${t('remove')}</button></figure>`).join('');
