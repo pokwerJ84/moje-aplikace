@@ -1,4 +1,4 @@
-import { initManuals } from './manuals.js?v=18';
+import { initManuals } from './manuals.js?v=19';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { toHiragana } from 'https://esm.sh/wanakana@5.3.1';
 
