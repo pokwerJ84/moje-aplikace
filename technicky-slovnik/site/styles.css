@@ -161,3 +161,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
  #manual-detail .manual-cover{width:50%;max-width:210px}
  #manual-detail .manual-cover img{max-height:180px}
 }
+
+/* Save stays within reach while editing a long instrument guide. */
+#manual-editor .manual-editor-heading{position:sticky;top:0;z-index:3;background:var(--white);align-items:center;padding:8px 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
+#manual-editor .manual-editor-heading h2{font-size:18px;line-height:1.3}
+.manual-editor-tools{display:flex;align-items:center;gap:6px;flex:none}
+#manual-save-top{min-height:40px;padding:8px 14px;font-size:14px}
+@media(max-width:420px){#manual-editor .manual-editor-heading h2{font-size:16px}#manual-save-top{padding:8px 10px}}
