@@ -1,4 +1,4 @@
-import { initManuals } from './manuals.js?v=17';
+import { initManuals } from './manuals.js?v=18';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { toHiragana } from 'https://esm.sh/wanakana@5.3.1';
 
@@ -210,10 +210,10 @@ async function showDetails(word, language=state.language) {
   $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button class="button primary" data-edit="${escapes(word.id)}">${escapes(t('editWord'))}</button><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
   $('#detail-dialog').showModal();
   if (word.image_data) {
-    $('#detail-photo').outerHTML = `<img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" />`;
+    $('#detail-photo').outerHTML = `<a href="${escapes(word.image_data)}" data-photo-zoom><img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" /></a>`;
   } else if (state.user && word.image_path) {
     const {data,error} = await supabase.storage.from('dictionary-images').createSignedUrl(word.image_path,3600);
-    if (!error && data?.signedUrl && state.selected?.id === word.id) $('#detail-photo').outerHTML = `<img class="photo" src="${escapes(data.signedUrl)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" />`;
+    if (!error && data?.signedUrl && state.selected?.id === word.id) $('#detail-photo').outerHTML = `<a href="${escapes(data.signedUrl)}" data-photo-zoom><img class="photo" src="${escapes(data.signedUrl)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" /></a>`;
   }
 }
 
@@ -356,6 +356,19 @@ function startDictation(kind,button) {
 }
 $('#dictate-word').addEventListener('click',event=>startDictation('word',event.currentTarget));
 $('#dictate-description').addEventListener('click',event=>startDictation('description',event.currentTarget));
+document.addEventListener('click',event=>{
+  const photo=event.target.closest('[data-photo-zoom]');
+  if(photo){
+    event.preventDefault();
+    const image=$('#photo-viewer-image');
+    image.src=photo.href;image.alt=photo.querySelector('img')?.alt||'';
+    $('#photo-viewer').setAttribute('aria-label',image.alt||t('addPhoto'));
+    $('#photo-viewer-close').setAttribute('aria-label',t('close'));
+    $('#photo-viewer').showModal();
+  }
+});
+$('#photo-viewer-close').addEventListener('click',()=>$('#photo-viewer').close());
+$('#photo-viewer').addEventListener('close',()=>$('#photo-viewer-image').removeAttribute('src'));
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor')dialog.close();}));
 
 const manuals=initManuals({supabase,getUser:()=>state.user,getLanguage:()=>state.language,toast:showToast,decodePhoto});
