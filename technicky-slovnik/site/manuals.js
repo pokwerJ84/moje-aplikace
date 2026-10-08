@@ -2,7 +2,7 @@
 export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
   const $=s=>document.querySelector(s);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const labels={cs:{tab:'Přístroje',title:'Přístroje a postupy',help:'Vlastní poznámky z měření, návody krok za krokem a fotky.',add:'Přidat přístroj / postup',example:'Začít s KEYENCE VR3000',search:'Filtrovat přístroje…',instrument:'Přístroj',procedure:'Postup měření',model:'Výrobce / model',ja:'Japonský název (rómadži nebo znaky)',en:'Anglický název',description:'Co to je / k čemu to slouží',steps:'Postup krok za krokem',step:'Krok',stepTitle:'Název kroku',instructions:'Jak postupovat',addStep:'Přidat krok',cover:'Hlavní fotka přístroje',addCover:'Přidat / změnit hlavní fotku',photos:'Fotky a jejich popisky',addPhotos:'Přidat fotky',camera:'Vyfotit',caption:'Popisek / číslo kroku',save:'Uložit návod',edit:'Upravit',remove:'Smazat',close:'Zavřít',empty:'Zatím žádné návody. Přidej první přístroj nebo postup.',noResults:'Žádný výsledek.',saved:'Návod uložen.',error:'Návod se nepodařilo uložit. Zkus to znovu; u místních fotek může být plné úložiště. Přihlášení umožní ukládat fotky do účtu.',loadError:'Návody se nepodařilo načíst. Zkus Načíst znovu.',retry:'Načíst znovu',local:'Uloženo jen v tomto zařízení',cloud:'Uloženo v účtu',required:'Vyplň alespoň název nebo model.',confirm:'Opravdu smazat tento návod?',photoError:'Použij obrázek JPG, PNG nebo WebP do 8 MB.',missing:'Chybí japonský nebo anglický název',up:'Nahoru',down:'Dolů',saving:'Ukládám…',notes:'Vlastní návod — ověř postup podle školení a dokumentace přístroje.'},en:{tab:'Instruments',title:'Instruments & procedures',help:'Your measurement notes, step-by-step guides and photos.',add:'Add instrument / procedure',example:'Start with KEYENCE VR3000',search:'Filter instruments…',instrument:'Instrument',procedure:'Measurement procedure',model:'Manufacturer / model',ja:'Japanese name (romaji or characters)',en:'English name',description:'What it is / what it is used for',steps:'Step-by-step procedure',step:'Step',stepTitle:'Step title',instructions:'Instructions',addStep:'Add step',cover:'Main instrument photo',addCover:'Add / change main photo',photos:'Photos and captions',addPhotos:'Add photos',camera:'Take photo',caption:'Caption / step number',save:'Save guide',edit:'Edit',remove:'Delete',close:'Close',empty:'No guides yet. Add your first instrument or procedure.',noResults:'No matches.',saved:'Guide saved.',error:'Could not save the guide. Please retry; local photo storage may be full. Sign in to save photos to your account.',loadError:'Could not load guides. Try Reload.',retry:'Reload',local:'Stored on this device only',cloud:'Saved to your account',required:'Enter a name or model.',confirm:'Delete this guide?',photoError:'Use JPG, PNG or WebP images up to 8 MB.',missing:'Japanese or English name missing',up:'Move up',down:'Move down',saving:'Saving…',notes:'Personal guide — check your procedure against training and instrument documentation.'}};
+  const labels={cs:{tab:'Přístroje',title:'Přístroje a postupy',help:'Vlastní poznámky z měření, návody krok za krokem a fotky.',add:'Přidat přístroj / postup',example:'Začít s KEYENCE VR3000',search:'Filtrovat přístroje…',instrument:'Přístroj',procedure:'Postup měření',model:'Výrobce / model',ja:'Japonský název (rómadži nebo znaky)',en:'Anglický název',description:'Co to je / k čemu to slouží',steps:'Postup krok za krokem',step:'Krok',stepTitle:'Název kroku',instructions:'Jak postupovat',addStep:'Přidat krok',cover:'Hlavní fotka přístroje',addCover:'Přidat / změnit hlavní fotku',photos:'Fotky a jejich popisky',addPhotos:'Přidat fotky',camera:'Vyfotit',caption:'Popisek / číslo kroku',saveShort:'Uložit',save:'Uložit návod',edit:'Upravit',remove:'Smazat',close:'Zavřít',empty:'Zatím žádné návody. Přidej první přístroj nebo postup.',noResults:'Žádný výsledek.',saved:'Návod uložen.',error:'Návod se nepodařilo uložit. Zkus to znovu; u místních fotek může být plné úložiště. Přihlášení umožní ukládat fotky do účtu.',loadError:'Návody se nepodařilo načíst. Zkus Načíst znovu.',retry:'Načíst znovu',local:'Uloženo jen v tomto zařízení',cloud:'Uloženo v účtu',required:'Vyplň alespoň název nebo model.',confirm:'Opravdu smazat tento návod?',photoError:'Použij obrázek JPG, PNG nebo WebP do 8 MB.',missing:'Chybí japonský nebo anglický název',up:'Nahoru',down:'Dolů',saving:'Ukládám…',notes:'Vlastní návod — ověř postup podle školení a dokumentace přístroje.'},en:{tab:'Instruments',title:'Instruments & procedures',help:'Your measurement notes, step-by-step guides and photos.',add:'Add instrument / procedure',example:'Start with KEYENCE VR3000',search:'Filter instruments…',instrument:'Instrument',procedure:'Measurement procedure',model:'Manufacturer / model',ja:'Japanese name (romaji or characters)',en:'English name',description:'What it is / what it is used for',steps:'Step-by-step procedure',step:'Step',stepTitle:'Step title',instructions:'Instructions',addStep:'Add step',cover:'Main instrument photo',addCover:'Add / change main photo',photos:'Photos and captions',addPhotos:'Add photos',camera:'Take photo',caption:'Caption / step number',saveShort:'Save',save:'Save guide',edit:'Edit',remove:'Delete',close:'Close',empty:'No guides yet. Add your first instrument or procedure.',noResults:'No matches.',saved:'Guide saved.',error:'Could not save the guide. Please retry; local photo storage may be full. Sign in to save photos to your account.',loadError:'Could not load guides. Try Reload.',retry:'Reload',local:'Stored on this device only',cloud:'Saved to your account',required:'Enter a name or model.',confirm:'Delete this guide?',photoError:'Use JPG, PNG or WebP images up to 8 MB.',missing:'Japanese or English name missing',up:'Move up',down:'Move down',saving:'Saving…',notes:'Personal guide — check your procedure against training and instrument documentation.'}};
   const t=k=>labels[getLanguage()][k];
   const key=()=> 'technical-manuals-v1'+(getUser()?':'+getUser().id:'');
   let list=[],draft=null,busy=false,loadedUser=null,loadFailed=false,photoStep=null;
@@ -90,8 +90,13 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
     $('#manual-form').reset();for(const k of ['kind','ja','en','model','description'])$('#manual-form').elements[k].value=draft[k];
     $('#manual-message').textContent='';render();renderDraft();$('#manual-editor').showModal();
   }
+  function setSaveBusy(value){
+    $('#manual-form').querySelectorAll('[data-manual-save]').forEach(button=>{
+      button.disabled=value;button.textContent=t(value?'saving':button.id==='manual-save-top'?'saveShort':'save');
+    });
+  }
   async function addPhotos(files,stepId){
-    if(busy)return;busy=true;$('#manual-save').disabled=true;
+    if(busy)return;busy=true;setSaveBusy(true);
     try{
       collect();for(const file of (stepId==='cover'?files.slice(0,1):files)){
         if(file.size>8*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error(t('photoError'));
@@ -99,7 +104,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
         if(stepId==='cover')draft.photos=draft.photos.filter(p=>!p.cover);
         draft.photos.push({id:crypto.randomUUID(),data:canvas.toDataURL('image/jpeg',.8),caption:'',stepId:stepId==='cover'?null:stepId||null,cover:stepId==='cover'});
       }
-    }catch(error){toast(error.message)}finally{renderDraft();busy=false;$('#manual-save').disabled=false}
+    }catch(error){toast(error.message)}finally{renderDraft();busy=false;setSaveBusy(false)}
   }
   $('#manual-add').onclick=()=>edit();$('#manual-example').onclick=()=>{edit();$('#manual-form').elements.en.value='3D scanner';$('#manual-form').elements.model.value='KEYENCE VR3000'};
   $('#manual-search').oninput=render;$('#manual-retry').onclick=()=>void setUser();
@@ -127,7 +132,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
   }
   $('#manual-form').onsubmit=async e=>{
     e.preventDefault();if(busy)return;collect();if(![draft.ja,draft.en,draft.model].some(Boolean)){$('#manual-message').textContent=t('required');return}
-    busy=true;$('#manual-save').disabled=true;$('#manual-save').textContent=t('saving');const uploaded=[];
+    busy=true;setSaveBusy(true);const uploaded=[];
     try{
       const previous=list.find(r=>r.id===draft.id);let row=structuredClone(draft);
       if(getUser()){
@@ -139,7 +144,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto}) {
       if(getUser()&&previous){const paths=previous.photos.map(p=>p.path).filter(p=>p&&!row.photos.some(n=>n.path===p));if(paths.length)await supabase.storage.from('dictionary-images').remove(paths)}
       render();$('#manual-editor').close();toast(t('saved'));
     }catch(error){console.error(error);if(uploaded.length)await supabase.storage.from('dictionary-images').remove(uploaded);$('#manual-message').textContent=t('error')}
-    finally{busy=false;$('#manual-save').disabled=false;$('#manual-save').textContent=t('save')}
+    finally{busy=false;setSaveBusy(false)}
   };
   list=read();render();return {setUser,render};
 }
