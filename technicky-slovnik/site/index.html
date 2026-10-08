@@ -10,10 +10,10 @@
     <script src="./theme.js?v=10"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=red-book-20261006-r1" />
-    <link rel="stylesheet" href="./styles.css?v=compact-20261008-v17" />
+    <link rel="stylesheet" href="./styles.css?v=fixed-20261008-v18" />
     <link rel="stylesheet" href="./dark.css?v=17" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=compact-20261008-v17"></script>
+    <script type="module" src="./app.js?v=fixed-20261008-v18"></script>
   </head>
   <body>
     <main class="workspace">
@@ -100,6 +100,7 @@
       <p class="hint" data-manual-label="notes"></p><p id="manual-message" role="alert" class="message error"></p><button id="manual-save" type="submit" class="button primary" data-manual-label="save"></button>
     </form></dialog>
     <dialog id="manual-detail" class="dialog manual-dialog"><div id="manual-detail-content"></div></dialog>
+    <dialog id="photo-viewer" class="dialog photo-viewer" aria-label="Photo"><button id="photo-viewer-close" type="button" class="icon-button" aria-label="Close">×</button><img id="photo-viewer-image" alt="" /></dialog>
     <input id="manual-photo-files" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple />
     <input id="manual-camera-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
     <dialog id="detail-dialog" class="dialog"><div id="detail-content"></div></dialog>
