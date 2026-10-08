@@ -10,10 +10,10 @@
     <script src="./theme.js?v=10"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=red-book-20261006-r1" />
-    <link rel="stylesheet" href="./styles.css?v=fixed-20261008-v18" />
+    <link rel="stylesheet" href="./styles.css?v=topsave-20261008-v19" />
     <link rel="stylesheet" href="./dark.css?v=17" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=fixed-20261008-v18"></script>
+    <script type="module" src="./app.js?v=topsave-20261008-v19"></script>
   </head>
   <body>
     <main class="workspace">
@@ -88,7 +88,7 @@
     </form></dialog>
 
     <dialog id="manual-editor" class="dialog manual-dialog"><form id="manual-form">
-      <div class="dialog-heading"><h2 data-manual-label="title"></h2><button type="button" class="icon-button" data-manual-close="manual-editor" aria-label="Close">×</button></div>
+      <div class="dialog-heading manual-editor-heading"><h2 data-manual-label="title"></h2><div class="manual-editor-tools"><button id="manual-save-top" data-manual-save type="submit" class="button primary" data-manual-label="saveShort"></button><button type="button" class="icon-button" data-manual-close="manual-editor" aria-label="Close">×</button></div></div>
       <label><select name="kind"><option value="instrument" data-manual-label="instrument"></option><option value="procedure" data-manual-label="procedure"></option></select></label>
       <label><span data-manual-label="ja"></span><input name="ja" maxlength="200" /></label>
       <label><span data-manual-label="en"></span><input name="en" maxlength="200" /></label>
@@ -97,7 +97,7 @@
       <label><span data-manual-label="description"></span><textarea name="description" rows="3" maxlength="10000"></textarea></label>
       <h3 data-manual-label="steps"></h3><div id="manual-steps"></div><button id="manual-add-step" class="button outline" type="button" data-manual-label="addStep"></button>
       <h3 data-manual-label="photos"></h3><div id="manual-photos" class="manual-gallery"></div><div class="manual-actions"><button id="manual-add-photos" type="button" class="button outline" data-manual-label="addPhotos"></button><button id="manual-camera" type="button" class="button outline" data-manual-label="camera"></button></div>
-      <p class="hint" data-manual-label="notes"></p><p id="manual-message" role="alert" class="message error"></p><button id="manual-save" type="submit" class="button primary" data-manual-label="save"></button>
+      <p class="hint" data-manual-label="notes"></p><p id="manual-message" role="alert" class="message error"></p><button id="manual-save" data-manual-save type="submit" class="button primary" data-manual-label="save"></button>
     </form></dialog>
     <dialog id="manual-detail" class="dialog manual-dialog"><div id="manual-detail-content"></div></dialog>
     <dialog id="photo-viewer" class="dialog photo-viewer" aria-label="Photo"><button id="photo-viewer-close" type="button" class="icon-button" aria-label="Close">×</button><img id="photo-viewer-image" alt="" /></dialog>
