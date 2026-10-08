@@ -82,3 +82,54 @@
  #manual-detail .manual-gallery{grid-template-columns:1fr}
  #manual-detail .manual-cover img{max-height:360px}
 }
+
+/* Compact list with light reading surfaces. */
+.workspace{max-width:1000px;padding-top:22px}.top{margin-bottom:14px;gap:12px}
+.brand strong{font-size:20px}.brand-icon{width:38px;height:38px;border-radius:10px}
+.top-actions{gap:8px}.account-mini{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+#account-status{margin:0;padding:0;border:0;background:transparent;font-size:12px;line-height:1.3;white-space:nowrap}
+#account-action{padding:3px 8px;min-height:28px;font-size:12px}
+.language-switch{padding:2px}.language-switch button{padding:5px 9px;font-size:13px}
+.theme-toggle{width:34px;min-height:34px!important;font-size:20px;padding:3px!important}
+.section-tabs{display:flex;flex-wrap:nowrap;background:var(--wash);padding:4px;border-radius:11px;margin:0 0 14px;gap:4px}
+.section-tabs button{flex:1;border:0;min-height:38px;border-radius:8px;padding:7px 12px;font-size:15px}
+.section-tabs button[aria-pressed=true]{background:var(--blue);color:white}
+#dictionary-section{background:transparent;border:0;box-shadow:none}
+#dictionary-section .section-title{justify-content:flex-end;padding:0;margin-bottom:6px}
+#dictionary-section .section-title>div{display:none}.count{background:transparent;font-size:12px;padding:0 2px;color:var(--muted)}
+#dictionary-section .toolbar,#manual-section .toolbar{flex-direction:row;align-items:center;padding:0 0 12px;gap:8px}
+.search-box{width:auto;flex:1;height:38px;background:var(--white);padding:0 10px;border-radius:9px}
+.search-box input{height:36px;font-size:14px}
+#add-open,#manual-add{flex:none;width:42px;min-height:38px;height:38px;padding:0;font-size:25px;border-radius:9px}
+#sync-status:empty,#manual-status:empty{display:none}#sync-status{padding:0 0 10px}
+.table-wrap{overflow:hidden;background:var(--white);border:1px solid var(--line);border-radius:13px}
+#dictionary-section thead{display:none}#dictionary-section td{padding:0 14px;border-bottom:1px solid var(--line)}
+#dictionary-section tbody tr:hover{background:var(--wash)}
+.word-row{display:flex;align-items:center;gap:10px;min-height:70px}
+.word-pair{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.word-pair .word-name{font-size:17px;line-height:1.3;padding:2px 0;overflow-wrap:anywhere}
+.word-pair .word-english{font-size:14px;font-weight:400;color:var(--muted)}
+.word-row .speak{color:var(--blue);border:1px solid var(--line);min-width:38px;min-height:38px;flex:none;background:transparent}
+.word-row .icon-button{flex:none;font-size:19px;color:var(--muted)}
+.speak.is-speaking{background:#d9e6ff!important;border-color:var(--blue)!important}
+#manual-section{background:transparent;border:0;box-shadow:none;padding:0}
+#manual-section .section-title{display:none}#manual-section>.manual-actions{margin:0}
+#manual-section button[hidden]{display:none}#manual-status{margin:0 0 10px}
+.manual-list{margin-top:0;align-items:start}
+.manual-card{border-radius:13px;padding:16px;background:var(--white)}
+.manual-card-title strong{font-size:20px;margin:0}.manual-card .manual-kind{margin:4px 0 10px!important}
+.manual-card-photo{aspect-ratio:4/3;border-radius:9px;overflow:hidden;background:var(--wash)}
+.manual-card-photo img{display:block;width:100%;height:100%;object-fit:contain}
+.manual-card p{margin:10px 0 8px}.manual-meta{margin-top:10px}
+footer{font-size:12px;margin-top:14px}
+@media(max-width:650px){
+ .workspace{padding:16px 12px 20px}.top{align-items:center;flex-wrap:wrap;gap:10px}
+ .brand{gap:8px}.brand strong{font-size:18px}.top-actions{width:100%;justify-content:flex-start}
+ .account-mini{margin-left:auto;flex-direction:row;align-items:center;gap:6px}
+ .top-actions #account-action{margin-left:0;padding:3px 8px;font-size:12px}
+ .section-tabs button{font-size:14px;min-height:36px}.word-row{min-height:66px;gap:8px}
+ #dictionary-section td{padding:0 12px}.word-pair .word-name.ja{font-size:16px}
+ .word-row .icon-button{min-width:32px}
+ #manual-search{height:38px;min-height:38px;padding:8px 10px;font-size:14px;flex:1}
+ #manual-add{min-height:38px}.manual-list{grid-template-columns:1fr}
+}
