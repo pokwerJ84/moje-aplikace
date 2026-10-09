@@ -32,7 +32,7 @@ struct WordWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "character.book.closed.fill").foregroundStyle(Color(red: 0.78, green: 0.62, blue: 0.30))
+                Image("BrandIcon").resizable().scaledToFill().frame(width: 24, height: 24).clipShape(RoundedRectangle(cornerRadius: 6))
                 Text("TECHNICKÝ SLOVNÍK").font(.caption2.weight(.bold)).tracking(0.7)
                 Spacer()
             }
