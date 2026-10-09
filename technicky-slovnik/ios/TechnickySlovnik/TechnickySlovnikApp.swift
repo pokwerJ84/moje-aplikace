@@ -20,9 +20,6 @@ final class DictionarySession: ObservableObject {
     private let keychainAccount = "supabase.refresh-token"
 
     init() {
-        if let saved = Self.loadSecret(service: keychainService, account: keychainAccount) {
-            Task { await refreshAndLoad(refreshToken: saved) }
-        }
     }
 
     func signInAndLoad() async {
@@ -33,7 +30,7 @@ final class DictionarySession: ObservableObject {
         isBusy = true
         defer { isBusy = false }
         do {
-            var request = URLRequest(url: SupabaseConfig.url.appendingPathComponent("auth/v1/token").appending(queryItems: [URLQueryItem(name: "grant_type", value: "password")]))
+            var request = URLRequest(url: SupabaseConfig.url.appendingPathComponent("auth").appendingPathComponent("v1").appendingPathComponent("token").appending(queryItems: [URLQueryItem(name: "grant_type", value: "password")]))
             request.httpMethod = "POST"
             request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -77,7 +74,7 @@ final class DictionarySession: ObservableObject {
 
     private func loadWords() async throws {
         guard let accessToken else { throw AppError.missingSession }
-        var components = URLComponents(url: SupabaseConfig.url.appendingPathComponent("rest/v1/dictionary_words"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: SupabaseConfig.url.appendingPathComponent("rest").appendingPathComponent("v1").appendingPathComponent("dictionary_words"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "select", value: "id,ja,en,cs"),
             URLQueryItem(name: "order", value: "created_at.asc")
