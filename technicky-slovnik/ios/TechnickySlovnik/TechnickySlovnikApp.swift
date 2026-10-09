@@ -29,6 +29,12 @@ struct DictionaryWebView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let content = WKUserContentController()
+        let themeBootstrap = WKUserScript(
+            source: "if (!localStorage.getItem('technical-dictionary-theme')) localStorage.setItem('technical-dictionary-theme', 'dark');",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        content.addUserScript(themeBootstrap)
         content.add(context.coordinator.bridge, name: "widgetWords")
         let config = WKWebViewConfiguration()
         config.userContentController = content
@@ -70,7 +76,6 @@ struct TechnickySlovnikApp: App {
             DictionaryWebView()
                 .ignoresSafeArea(edges: .bottom)
                 .background(Color(red: 0.125, green: 0.09, blue: 0.145))
-                .preferredColorScheme(.light)
         }
     }
 }
