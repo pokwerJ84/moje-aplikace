@@ -50,7 +50,7 @@ struct WordWidgetView: View {
             }
         }
         .padding()
-        .containerBackground(Color(red: 0.97, green: 0.95, blue: 0.91), for: . widget)
+        .containerBackground(Color(red: 0.97, green: 0.95, blue: 0.91), for: .widget)
         .widgetURL(WidgetData.dictionaryURL)
     }
 }
