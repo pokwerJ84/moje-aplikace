@@ -74,7 +74,7 @@
 		A60000000000000000000002 /* TechnickySlovnikWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A80000000000000000000002;
-			buildPhases = (A40000000000000000000002, A70000000000000000000002, A40000000000000000000004, );
+			buildPhases = (A40000000000000000000002, A70000000000000000000002, );
 			buildRules = ();
 			dependencies = ();
 			name = TechnickySlovnikWidgetExtension;
