@@ -105,6 +105,7 @@ function renderWords() {
   $('#words').innerHTML = filtered.map(w => `<tr class="${!w.ja.trim()||!w.en.trim()?'incomplete':''}"><td colspan="4"><div class="word-row"><div class="word-pair"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja||'—')}</button><button class="word-name word-english" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en||'—')}${w.image_data||w.image_path?' ▧':''}</button></div><button type="button" class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}" ${!w.ja?'disabled':''}><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button type="button" class="icon-button" data-edit="${escapes(w.id)}" title="${escapes(t('editWord'))}" aria-label="${escapes(t('editWord'))}">✎</button></div></td></tr>`).join('');
   $('#empty').classList.toggle('hidden', !!state.list.length);
   $('#no-results').classList.toggle('hidden', !state.list.length || !!filtered.length);
+  try { window.webkit?.messageHandlers?.widgetWords?.postMessage(state.list.map(({id,ja,en,cs})=>({id:String(id),ja:String(ja||''),en:String(en||''),cs:String(cs||'')}))); } catch(error) { console.debug('Native widget bridge unavailable',error); }
 }
 let activeUtterance=null;
 let speechToken=0;
