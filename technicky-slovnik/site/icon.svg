@@ -1,9 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="104" fill="#c62828"/>
-  <path d="M68 145c62-23 125-14 188 24 63-38 126-47 188-24v235c-72-20-132-8-188 34-56-42-116-54-188-34V145Z" fill="#fff"/>
-  <path d="M256 169v245M82 166c54-16 110-8 158 22v190c-51-32-102-42-158-29V166Zm348 0c-54-16-110-8-158 22v190c51-32 102-42 158-29V166Z" fill="none" stroke="#c62828" stroke-linecap="round" stroke-linejoin="round" stroke-width="10"/>
-  <text x="168" y="294" fill="#c62828" font-family="Noto Sans JP,Hiragino Kaku Gothic ProN,Yu Gothic,sans-serif" font-size="105" font-weight="700" text-anchor="middle">文</text>
-  <text x="348" y="257" fill="#c62828" font-family="Arial,sans-serif" font-size="42" font-weight="700" text-anchor="middle">A–Z</text>
-  <text x="348" y="325" fill="#c62828" font-family="Arial,sans-serif" font-size="48" font-weight="700" text-anchor="middle">Č</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#351d3a"/><stop offset=".58" stop-color="#682d61"/><stop offset="1" stop-color="#d99b45"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaf2"/><stop offset="1" stop-color="#f1d5a2"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <g transform="rotate(-9 256 256)">
+    <rect x="104" y="104" width="290" height="316" rx="34" fill="#e5b96b"/>
+    <rect x="126" y="82" width="290" height="334" rx="34" fill="url(#paper)" stroke="#f4d69f" stroke-width="8"/>
+    <rect x="354" y="82" width="62" height="62" rx="16" fill="#c69245"/>
+    <text x="270" y="323" fill="#56335b" font-family="Noto Sans JP,Hiragino Kaku Gothic ProN,Yu Gothic,sans-serif" font-size="214" font-weight="700" text-anchor="middle">あ</text>
+  </g>
 </svg>
-

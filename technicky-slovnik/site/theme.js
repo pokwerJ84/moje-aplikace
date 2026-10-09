@@ -15,7 +15,7 @@
       button.setAttribute('aria-label', english ? (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode') : (theme === 'dark' ? 'Přepnout na světlý režim' : 'Přepnout na tmavý režim'));
       button.title = button.getAttribute('aria-label');
     }
-    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#111827' : '#c62828';
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#201725' : '#f4eff4';
   }
   apply();
   document.addEventListener('DOMContentLoaded', () => {

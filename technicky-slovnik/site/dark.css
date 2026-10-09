@@ -1,12 +1,12 @@
-
-:root[data-theme="dark"]{color-scheme:light;--ink:#16243c;--muted:#617087;--blue:#2463dd;--blue-dark:#164cb4;--line:#d9e1ec;--wash:#eaf0f8;--page:#111827;--white:#f7f9fc;--danger:#b32929;--shadow:0 8px 24px #0002}
-[data-theme="dark"] .top,[data-theme="dark"] footer,[data-theme="dark"] #account-status,[data-theme="dark"] .count{color:#b8c6dc}
-[data-theme="dark"] .brand{color:#f1f5fc}
-[data-theme="dark"] .top .button.outline{background:#202d43;border-color:#36465e;color:#e7edf7}
-[data-theme="dark"] .language-switch,[data-theme="dark"] .section-tabs{background:#202d43}
-[data-theme="dark"] .language-switch button,[data-theme="dark"] .section-tabs button{color:#bdcbe0;background:transparent}
-[data-theme="dark"] .language-switch button[aria-pressed=true]{background:#f7f9fc;color:#164cb4}
-[data-theme="dark"] .section-tabs button[aria-pressed=true]{background:#2463dd;color:white}
+:root[data-theme="dark"]{color-scheme:light;--ink:#302338;--muted:#756878;--plum:#70406f;--plum-dark:#542b58;--line:#e1d5e1;--wash:#f5ecf3;--page:#201725;--white:#fffaf5;--gold:#c39a55;--gold-soft:#f6ead3;--danger:#a62925;--shadow:0 10px 34px #100b14a8}
+[data-theme="dark"] .top,[data-theme="dark"] footer,[data-theme="dark"] #account-status{color:#dfd2e2}
+[data-theme="dark"] .brand{color:#f9f4fa}
+[data-theme="dark"] .top .button.outline{background:#30243a;border-color:#5b4561;color:#f5edf6}
+[data-theme="dark"] .language-switch,[data-theme="dark"] .section-tabs{background:#30243a}
+[data-theme="dark"] .language-switch button,[data-theme="dark"] .section-tabs button{color:#e2d6e5;background:transparent}
+[data-theme="dark"] .language-switch button[aria-pressed=true]{background:#fffaf5;color:#70406f}
+[data-theme="dark"] .section-tabs button[aria-pressed=true]{background:#70406f;color:white}
 [data-theme="dark"] .panel,[data-theme="dark"] .dialog{background:var(--white)}
-[data-theme="dark"] #manual-example,[data-theme="dark"] #manual-retry,[data-theme="dark"] #manual-status,[data-theme="dark"] #sync-status{color:#b8c6dc}
+[data-theme="dark"] #manual-example,[data-theme="dark"] #manual-retry,[data-theme="dark"] #manual-status,[data-theme="dark"] #sync-status{color:#726276}
+[data-theme="dark"] .count{background:#f6ead3;color:#765117}
 .theme-toggle{width:34px;padding:3px;font-size:20px;line-height:1}

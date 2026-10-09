@@ -1,7 +1,7 @@
-const VERSION = "v19";
+const VERSION = "v20";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
-const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./manuals.js", "./updater.js", "./icon.svg", "./theme.js", "./dark.css", "./apple-touch-icon-v10.png", "./icon-192-v10.png", "./icon-512-v10.png", "./manifest.webmanifest"];
+const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./manuals.js", "./updater.js", "./icon.svg", "./theme.js", "./dark.css", "./apple-touch-icon-v11.png", "./icon-192-v11.png", "./icon-512-v11.png", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
