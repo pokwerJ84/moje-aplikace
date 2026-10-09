@@ -1,19 +1,19 @@
-# Technický slovník — iOS + WidgetKit (přípravná verze)
+# Technický slovník — nativní iOS obal a WidgetKit
 
-Tento Xcode projekt přidá malou iOS aplikaci pro přihlášení do stávajícího Supabase účtu a WidgetKit widget s denním slovíčkem (japonsky, anglicky, česky). Widget používá lokální kopii dat předanou aplikací; nepřistupuje k účtu ani heslu. Otevře stávající webový slovník po klepnutí.
+iOS aplikace otevře současný webový slovník uvnitř WKWebView, takže používá stejné obrazovky, jazyky, účty, slovní zásobu, nástroje, postupy a fotografie jako webová aplikace. Nemá vlastní kopii těchto obrazovek. Barvy a ikona vycházejí ze současného švestkovo-zlatého vzhledu a stejné ikony knihy s „あ“.
 
-## Stav
-Zdroj je připraven pro otevření v Xcode na Macu. V tomto prostředí není Xcode, proto projekt nebyl sestaven ani nainstalován. Před instalací je potřeba nastavit App Group a podpis podle níže uvedených kroků.
+Widget zobrazuje denní slovíčko japonsky, anglicky a česky. Webová aplikace bezpečně předává widgetu jen tato slovíčka pomocí nativního mostu; heslo ani přihlašovací tokeny do widgetu neposílá. Klepnutí na widget otevře slovník. Po změně seznamu se widget požádá o aktualizaci; přesný čas zobrazení aktualizace určuje iOS.
 
-## Nastavení v Xcode
-1. Otevři `TechnickySlovnik.xcodeproj`.
-2. U cílů **TechnickySlovnik** a **TechnickySlovnikWidgetExtension** nastav stejný Team a zapni Automatically manage signing.
-3. Zaregistruj App Group v Apple Developer účtu (např. `group.cz.pokwerj84.technickyslovnik`) a vyber ho v Signing & Capabilities u obou cílů. Pokud změníš název, změň také `AppGroupID` v `SharedWord.swift` a entitlement soubory.
-4. Zvol svůj iPhone jako run destination a spusť cíl **TechnickySlovnik**.
-5. Přihlas se stejným e-mailem a heslem jako na webu, klepni na **Načíst slovíčka**.
-6. Na iPhonu přidej widget Technický slovník na plochu.
+## Otevření a instalace
+1. Stáhni nebo naklonuj větev `ios-widget-v1` repozitáře.
+2. Na Macu otevři `technicky-slovnik/ios/TechnickySlovnik.xcodeproj`.
+3. U cílů **TechnickySlovnik** a **TechnickySlovnikWidgetExtension** vyber stejný Team a zapni automatické podepisování.
+4. Zaregistruj App Group v Apple Developer účtu (výchozí ID je `group.cz.pokwerj84.technickyslovnik`) a přiřaď ji oběma cílům. Pokud změníš ID, uprav `WidgetData.appGroupID` a entitlement soubory.
+5. Vyber iPhone jako Run Destination a spusť cíl **TechnickySlovnik**.
+6. Přihlas se do slovníku stejně jako na webu. Jakmile se načte seznam slovíček, přidej widget **Slovíčko dne** na plochu iPhonu.
 
-Widget se aktualizuje podle plánování iOS; přesný čas aktualizace systém negarantuje. Otevření aplikace obnoví slovíčka z účtu. Data widgetu obsahují pouze tři výrazy slovíčka a jsou sdílena lokálně mezi aplikací a rozšířením.
-
-## Poznámka k podpisu
-Widget používá App Groups pro bezpečné sdílení lokálních dat mezi aplikací a widgetem. App Groups musí být registrovaná a povolená pro oba cíle; dostupnost této capability závisí na typu Apple Developer účtu. Bez ní nelze přenést uživatelská slovíčka do widgetu.
+## Poznámky
+- Webová část vyžaduje připojení k internetu; po přihlášení si pamatuje relaci v úložišti WKWebView.
+- App Groups musí být zaregistrovaná a povolená pro oba cíle, aby aplikace mohla sdílet seznam slov s widgetem.
+- WidgetKit aktualizuje obsah podle vlastního plánování iOS.
+- Projekt zde nebylo možné sestavit ani spustit, protože pracovní prostředí nemá Xcode. Xcode build na Macu je potřeba ověřit před instalací.
