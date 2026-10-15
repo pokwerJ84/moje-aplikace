@@ -66,14 +66,14 @@ export async function saveWordWithPhoto({supabase,user,row,previous,photo,list,s
         }
       }
       const query=previous?supabase.from('dictionary_words').update(row).eq('id',row.id):supabase.from('dictionary_words').insert(row);
-      const result=await query.select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').single();
+      const result=await query.select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').single();
       if(result.error)throw result.error;
       saved={...result.data,image_data:photo.changed?photo.data:previous?.image_data||null};
     } catch(error) {
       if(uploadedPath)try{await supabase.storage.from('dictionary-images').remove([uploadedPath]);}catch(cleanupError){console.warn(cleanupError);}
       throw error;
     }
-    if(photo.changed&&previous?.image_path&&previous.image_path!==saved.image_path){
+    if(photo.changed&&previous?.image_path&&previous.image_path!==saved.image_path&&!(previous.manual_data?.photos||[]).some(p=>p.path===previous.image_path)){
       try{await supabase.storage.from('dictionary-images').remove([previous.image_path]);}catch(error){console.warn('Could not remove replaced photo',error);}
     }
   } else {

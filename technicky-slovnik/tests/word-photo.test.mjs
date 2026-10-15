@@ -66,6 +66,11 @@ test('cloud: unchanged edit neither uploads nor removes any photo',async()=>{
   const next=await saveWordWithPhoto({supabase:api,user:{id:'owner'},row:base,previous,photo:{changed:false,data:null},list:[previous]});
   assert.deepEqual(calls.map(c=>c[0]),['update']);assert.equal(next[0].image_data,image);
 });
+test('cloud: replacing a word photo keeps photos archived from a moved instrument',async()=>{
+  const {api,calls}=cloud();const previous={...base,image_path:'owner/cover.jpg',manual_data:{photos:[{path:'owner/cover.jpg',cover:true},{path:'owner/step.jpg',stepId:'s1'}]}};
+  await saveWordWithPhoto({supabase:api,user:{id:'owner'},row:base,previous,photo:{changed:true,data:image},list:[previous]});
+  assert(!calls.some(c=>c[0]==='remove'));
+});
 test('draft controls: camera, preview, removal, reset, file validation and stale preview',async()=>{
   const elements=new Map();
   function $(selector){

@@ -1,5 +1,6 @@
-import { initManuals } from './manuals.js?v=19';
-import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=21';
+import { initManuals } from './manuals.js?v=22';
+import { transferLocal, hydrateTransferredWord } from './entry-transfer.js?v=22';
+import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=22';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { toHiragana } from 'https://esm.sh/wanakana@5.3.1';
 
@@ -34,6 +35,8 @@ Object.assign(words.cs,{autoTranslate:'Automaticky doplnit překlady',translatio
 Object.assign(words.en,{autoTranslate:'Automatically fill missing translations',translationNote:'Translation is optional. Missing Japanese or English names are marked red; complete them later using Edit.',editWord:'Edit word',incomplete:'Japanese or English name missing',completionHint:'Red word = Japanese or English name missing. Use ✎ Edit to complete it.'});
 Object.assign(words.cs,{pickPhoto:'Vybrat fotku',removePhoto:'Odebrat fotku',draftPhotoHint:'Fotka se uloží společně se slovíčkem.'});
 Object.assign(words.en,{pickPhoto:'Choose photo',removePhoto:'Remove photo',draftPhotoHint:'The photo will be saved together with the word.'});
+Object.assign(words.cs,{moveToManual:'Přesunout do přístrojů',confirmMoveManual:'Přesunout položku ze slovníku do přístrojů?',confirmMoveWord:'Přesunout přístroj do slovníku? Kroky a všechny fotky zůstanou uchované pro přesun zpět.',moved:'Položka byla přesunuta.',moveFailed:'Přesun se nepodařil. Původní položka zůstala zachovaná; obnov aplikaci a zkus to znovu.'});
+Object.assign(words.en,{moveToManual:'Move to instruments',confirmMoveManual:'Move this word from vocabulary to instruments?',confirmMoveWord:'Move this instrument to vocabulary? All steps and photos will be retained for moving it back.',moved:'Entry moved.',moveFailed:'Could not move the entry. The original is preserved; reload and try again.'});
 const $ = (selector) => document.querySelector(selector);
 const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, detailLanguage:'cs', jisho:[], sync:'', authMode:'login', loadingUser:null};
 function readLocalWords() {
@@ -148,9 +151,15 @@ function speak(word) {
   // utterance until its own completion; stale cancel events cannot clear it.
   if(engine.speaking||engine.pending){engine.cancel();setTimeout(play,100);}else play();
 }
+const termKey=w=>[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|');
+async function movedWordTerms(){
+  const moved=await supabase.from('dictionary_manuals').select('id,word_data');if(moved.error)throw moved.error;
+  return new Set([...(moved.data||[]),...manuals.getEntries()].filter(m=>m.word_data).map(m=>termKey(m.word_data)));
+}
 async function syncGuestWords(user) {
-  const localWords = readLocalWords();
-  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').order('created_at',{ascending:true});
+  const movedTerms=await movedWordTerms();
+  const localWords = readLocalWords().filter(w=>!movedTerms.has(termKey(w)));
+  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').order('created_at',{ascending:true});
   if (result.error) throw result.error;
   const cloudWords = result.data || [];
   const cloudByTerm = new Map(cloudWords.map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w]));
@@ -166,16 +175,16 @@ async function syncGuestWords(user) {
       const uploaded=await supabase.storage.from('dictionary-images').upload(image_path,blob,{upsert:false,contentType:blob.type||'image/jpeg'});
       if(uploaded.error) throw uploaded.error;
     }
-    const row={id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path};
+    const row={id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path,manual_data:word.manual_data||null};
     const {error}=existing ? await supabase.from('dictionary_words').update({image_path}).eq('id',existing.id) : await supabase.from('dictionary_words').insert(row);
     if(error) throw error;
   }
-  const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').order('created_at',{ascending:true});
+  const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').order('created_at',{ascending:true});
   if(refreshed.error) throw refreshed.error;
   const imageByTerm=new Map(localWords.filter(w=>w.image_data).map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w.image_data]));
   const merged=(refreshed.data||[]).map(w=>({...w,description_ja:w.description_ja||starterJa[String(w.id).split(':').at(-1)]||'',image_data:imageByTerm.get([w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'))||null}));
   saveLocalWords(merged);
-  return merged;
+  return merged.map(hydrateTransferredWord);
 }
 async function loadWords() {
   const profile = await supabase.from('dictionary_profiles').select('seeded').maybeSingle();
@@ -186,9 +195,9 @@ async function loadWords() {
     if (created.error && created.error.code !== '23505') throw created.error;
   }
   if (!seeded) {
-    const rows = initialWords.map(w => ({id:`${state.user.id}:${w.id}`,ja:w.ja,en:w.en,cs:w.cs,description_ja:w.description_ja,description_cs:w.description_cs,description_en:w.description_en}));
-    const inserted = await supabase.from('dictionary_words').upsert(rows,{onConflict:'id',ignoreDuplicates:true});
-    if (inserted.error) throw inserted.error;
+    const movedTerms=await movedWordTerms();
+    const rows = initialWords.filter(w=>!movedTerms.has(termKey(w))).map(w => ({id:`${state.user.id}:${w.id}`,ja:w.ja,en:w.en,cs:w.cs,description_ja:w.description_ja,description_cs:w.description_cs,description_en:w.description_en}));
+    if(rows.length){const inserted = await supabase.from('dictionary_words').upsert(rows,{onConflict:'id',ignoreDuplicates:true});if(inserted.error)throw inserted.error;}
     const marked = await supabase.from('dictionary_profiles').update({seeded:true}).eq('owner_id',state.user.id);
     if (marked.error) throw marked.error;
   }
@@ -211,7 +220,7 @@ async function showDetails(word, language=state.language) {
   const emptyDescription = t('noDescription');
   const term=word[language]||word.ja;
   const otherTerms=[['ja',word.ja],['en',word.en],['cs',word.cs]].filter(([lang])=>lang!==language).map(([lang,value])=>`<button class="detail-term" type="button" data-description-lang="${lang}"><small>${escapes(t(lang==='ja'?'japanese':lang==='en'?'english':'czech'))}</small><strong>${escapes(value)}</strong></button>`).join('');
-  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button class="button primary" data-edit="${escapes(word.id)}">${escapes(t('editWord'))}</button><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
+  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button type="button" class="button outline" data-move-to-manual="${escapes(word.id)}">${escapes(t('moveToManual'))}</button><button class="button primary" data-edit="${escapes(word.id)}">${escapes(t('editWord'))}</button><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
   $('#detail-dialog').showModal();
   if (word.image_data) {
     $('#detail-photo').outerHTML = `<a href="${escapes(word.image_data)}" data-photo-zoom><img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" /></a>`;
@@ -289,9 +298,9 @@ $('#word-form').addEventListener('submit',async event=>{
 async function deleteWord(id){
   const word=state.list.find(w=>w.id===id);if(!word||!confirm(t('confirmDelete')))return;
   if(state.user){
-    if(word.image_path){const removed=await supabase.storage.from('dictionary-images').remove([word.image_path]);if(removed.error)console.error(removed.error);}
     const result=await supabase.from('dictionary_words').delete().eq('id',id);
     if(result.error){console.error(result.error);showToast(t('saveError'));return;}
+    const paths=[...new Set([word.image_path,...(word.manual_data?.photos||[]).map(p=>p.path)].filter(Boolean))];if(paths.length)await supabase.storage.from('dictionary-images').remove(paths);
   }
   state.list=state.list.filter(w=>w.id!==id);
   if(!state.user&&!saveLocalWords())return;
@@ -305,6 +314,7 @@ function editWord(id){
   setMessage($('#form-message'),'');$('#dialog-title').textContent=t('editWord');$('#word-dialog').showModal();
 }
 $('#detail-content').addEventListener('click',event=>{
+  const move=event.target.closest('[data-move-to-manual]');if(move){void moveEntry('word',state.list.find(w=>w.id===move.dataset.moveToManual));return;}
   const edit=event.target.closest('[data-edit]');if(edit){editWord(edit.dataset.edit);return;}
 
   const term=event.target.closest('[data-description-lang]');if(term&&state.selected){void showDetails(state.selected,term.dataset.descriptionLang);return;}
@@ -338,9 +348,9 @@ async function uploadPhoto(file){
   const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'}[file.type];const path=`${state.user.id}/${word.id}-${crypto.randomUUID()}.${ext}`;
   const uploaded=await supabase.storage.from('dictionary-images').upload(path,file,{upsert:false,contentType:file.type});
   if(uploaded.error){console.error(uploaded.error);showToast(t('photoError'));return;}
-  const updated=await supabase.from('dictionary_words').update({image_path:path}).eq('id',word.id).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').single();
+  const updated=await supabase.from('dictionary_words').update({image_path:path}).eq('id',word.id).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').single();
   if(updated.error){console.error(updated.error);await supabase.storage.from('dictionary-images').remove([path]);showToast(t('photoError'));return;}
-  if(word.image_path)await supabase.storage.from('dictionary-images').remove([word.image_path]);
+  if(word.image_path&&!(word.manual_data?.photos||[]).some(p=>p.path===word.image_path))await supabase.storage.from('dictionary-images').remove([word.image_path]);
   state.list=state.list.map(w=>w.id===word.id?updated.data:w);saveLocalWords();renderWords();await showDetails(updated.data);showToast(t('photoSaved'));
 }
 $('#photo-file').addEventListener('change',event=>{void uploadPhoto(event.target.files?.[0]);event.target.value='';});
@@ -376,7 +386,36 @@ $('#photo-viewer').addEventListener('close',()=>$('#photo-viewer-image').removeA
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor'&&!(dialog.id==='word-dialog'&&wordPhoto.isBusy()))dialog.close();}));
 
 const wordPhoto=initWordPhoto({supabase,$,t,decodePhoto,setMessage});
-const manuals=initManuals({supabase,getUser:()=>state.user,getLanguage:()=>state.language,toast:showToast,decodePhoto});
+const manuals=initManuals({supabase,getUser:()=>state.user,getLanguage:()=>state.language,toast:showToast,decodePhoto,onMoveToWords:entry=>moveEntry('manual',entry)});
+let transferBusy=false;
+async function moveEntry(source,entry){
+  if(!entry||transferBusy||!confirm(t(source==='word'?'confirmMoveManual':'confirmMoveWord')))return;
+  transferBusy=true;const user=state.user;
+  document.querySelectorAll('[data-move-to-manual],[data-manual-to-word]').forEach(b=>b.disabled=true);
+  try{
+    let nextWords,nextManuals;
+    if(user){
+      const {data,error}=await supabase.rpc('dictionary_move_entry',{p_source:source,p_id:entry.id});
+      if(error)throw error;
+      if(state.user?.id!==user.id)return;
+      if(source==='word'){
+        nextWords=state.list.filter(w=>w.id!==entry.id);
+        nextManuals=[...manuals.getEntries().filter(m=>m.id!==data.entry.id),data.entry];
+      }else{
+        nextWords=[...state.list.filter(w=>w.id!==data.entry.id),hydrateTransferredWord(data.entry)];
+        nextManuals=manuals.getEntries().filter(m=>m.id!==entry.id);
+      }
+      try{localStorage.setItem(`${LOCAL_KEY}:${user.id}`,JSON.stringify(nextWords));localStorage.setItem(`technical-manuals-v1:${user.id}`,JSON.stringify(nextManuals));}catch(error){console.warn('Move saved to account; local cache is full',error);}
+    }else{
+      const result=transferLocal({source,entry,words:state.list,manuals:manuals.getEntries(),storage:localStorage,wordKey:LOCAL_KEY,manualKey:'technical-manuals-v1'});
+      nextWords=result.words;nextManuals=result.manuals;
+    }
+    state.list=nextWords;state.selected=null;manuals.replaceEntries(nextManuals);renderWords();
+    $('#detail-dialog').close();$('#manual-detail').close();
+    $('#tab-'+(source==='word'?'manuals':'words')).click();showToast(t('moved'));
+  }catch(error){console.error(error);showToast(t('moveFailed'));}
+  finally{transferBusy=false;document.querySelectorAll('[data-move-to-manual],[data-manual-to-word]').forEach(b=>b.disabled=false);}
+}
 for(const section of ['words','manuals'])$('#tab-'+section).addEventListener('click',()=>{
   $('#dictionary-section').classList.toggle('hidden',section!=='words');$('#manual-section').classList.toggle('hidden',section!=='manuals');
   for(const tab of ['words','manuals'])$('#tab-'+tab).setAttribute('aria-pressed',String(tab===section));
