@@ -1,4 +1,5 @@
 import { initManuals } from './manuals.js?v=19';
+import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=21';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { toHiragana } from 'https://esm.sh/wanakana@5.3.1';
 
@@ -31,6 +32,8 @@ const words = {
 };
 Object.assign(words.cs,{autoTranslate:'Automaticky doplnit překlady',translationNote:'Překlad je volitelný. Bez něj se chybějící japonský nebo anglický název označí červeně a můžeš ho později doplnit přes Upravit.',editWord:'Upravit slovíčko',incomplete:'Chybí japonský nebo anglický název',completionHint:'Červené slovíčko = chybí japonský nebo anglický název. Doplň ho přes ✎ Upravit.'});
 Object.assign(words.en,{autoTranslate:'Automatically fill missing translations',translationNote:'Translation is optional. Missing Japanese or English names are marked red; complete them later using Edit.',editWord:'Edit word',incomplete:'Japanese or English name missing',completionHint:'Red word = Japanese or English name missing. Use ✎ Edit to complete it.'});
+Object.assign(words.cs,{pickPhoto:'Vybrat fotku',removePhoto:'Odebrat fotku',draftPhotoHint:'Fotka se uloží společně se slovíčkem.'});
+Object.assign(words.en,{pickPhoto:'Choose photo',removePhoto:'Remove photo',draftPhotoHint:'The photo will be saved together with the word.'});
 const $ = (selector) => document.querySelector(selector);
 const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, detailLanguage:'cs', jisho:[], sync:'', authMode:'login', loadingUser:null};
 function readLocalWords() {
@@ -260,10 +263,12 @@ $('#words').addEventListener('click',event=>{
   const listen=event.target.closest('[data-speak]');if(listen){const word=state.list.find(w=>w.id===listen.dataset.speak);if(word)speak(word);return;}
   const del=event.target.closest('[data-delete]');if(del)void deleteWord(del.dataset.delete);
 });
-$('#add-open').addEventListener('click',()=>{$('#word-form').reset();delete $('#word-form').dataset.editId;setMessage($('#form-message'),'');$('#dialog-title').textContent=t('newWord');$('#word-dialog').showModal();});
+$('#add-open').addEventListener('click',()=>{$('#word-form').reset();void wordPhoto.reset();delete $('#word-form').dataset.editId;setMessage($('#form-message'),'');$('#dialog-title').textContent=t('newWord');$('#word-dialog').showModal();});
 $('#word-close').addEventListener('click',()=>$('#word-dialog').close());
 $('#word-form').addEventListener('submit',async event=>{
-  event.preventDefault(); const form=event.currentTarget; const values=Object.fromEntries(new FormData(form)); const submit=form.querySelector('[type=submit]');submit.disabled=true;submit.textContent=t('saving');
+  event.preventDefault();if(wordPhoto.isBusy())return;
+  const form=event.currentTarget; const values=Object.fromEntries(new FormData(form)); const submit=form.querySelector('[type=submit]');
+  const user=state.user;wordPhoto.setBusy(true);submit.textContent=t('saving');
   const editingId=form.dataset.editId;
   const row={id:editingId||crypto.randomUUID(),ja:String(values.ja).trim(),en:String(values.en).trim(),cs:String(values.cs).trim(),description_ja:String(values.description_ja||'').trim(),description_cs:String(values.description_cs||'').trim(),description_en:String(values.description_en||'').trim()};
   try {
@@ -273,16 +278,13 @@ $('#word-form').addEventListener('submit',async event=>{
     for(const target of langs) if(target!==source && !row[target]) row[target]=await translateText(row[source],source,target);
     const descriptionSource=langs.find(lang=>row[`description_${lang}`]);
     if(descriptionSource) for(const target of langs) if(target!==descriptionSource&&!row[`description_${target}`]) row[`description_${target}`]=await translateText(row[`description_${descriptionSource}`],descriptionSource,target);
-  } catch(error) { console.error(error); submit.disabled=false;submit.textContent=t('saveWord');setMessage($('#form-message'),error.message||t('translationError'),true);return; }
-  submit.disabled=false;submit.textContent=t('saveWord');
-  if(state.user){
-    const result=await (editingId?supabase.from('dictionary_words').update(row).eq('id',editingId):supabase.from('dictionary_words').insert(row)).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path').single();
-    if(result.error){console.error(result.error);setMessage($('#form-message'),t('saveError'),true);return;}
-    state.list=editingId?state.list.map(w=>w.id===editingId?result.data:w):[...state.list,result.data];
-  } else {
-    const next=editingId?state.list.map(w=>w.id===editingId?{...w,...row}:w):[...state.list,row]; if(!saveLocalWords(next))return;state.list=next;
-  }
-  renderWords();$('#word-dialog').close();showToast(t('saved'));
+  } catch(error) { console.error(error); wordPhoto.setBusy(false);submit.textContent=t('saveWord');setMessage($('#form-message'),error.message||t('translationError'),true);return; }
+  try {
+    const next=await saveWordWithPhoto({supabase,user,row,previous:state.list.find(word=>word.id===editingId),photo:wordPhoto.value(),list:state.list,saveLocalWords});
+    if(state.user?.id===user?.id){state.list=next;renderWords();}
+    $('#word-dialog').close();void wordPhoto.reset();showToast(t('saved'));
+  } catch(error) {console.error(error);setMessage($('#form-message'),t('saveError'),true);}
+  finally {wordPhoto.setBusy(false);submit.textContent=t('saveWord');}
 });
 async function deleteWord(id){
   const word=state.list.find(w=>w.id===id);if(!word||!confirm(t('confirmDelete')))return;
@@ -298,6 +300,7 @@ async function deleteWord(id){
 function editWord(id){
   const word=state.list.find(w=>w.id===id);if(!word)return;
   $('#detail-dialog').close();$('#word-form').reset();$('#word-form').dataset.editId=id;
+  void wordPhoto.reset(word);
   for(const name of ['ja','en','cs','description_ja','description_en','description_cs'])$('#word-form').elements[name].value=word[name]||'';
   setMessage($('#form-message'),'');$('#dialog-title').textContent=t('editWord');$('#word-dialog').showModal();
 }
@@ -370,8 +373,9 @@ document.addEventListener('click',event=>{
 });
 $('#photo-viewer-close').addEventListener('click',()=>$('#photo-viewer').close());
 $('#photo-viewer').addEventListener('close',()=>$('#photo-viewer-image').removeAttribute('src'));
-document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor')dialog.close();}));
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor'&&!(dialog.id==='word-dialog'&&wordPhoto.isBusy()))dialog.close();}));
 
+const wordPhoto=initWordPhoto({supabase,$,t,decodePhoto,setMessage});
 const manuals=initManuals({supabase,getUser:()=>state.user,getLanguage:()=>state.language,toast:showToast,decodePhoto});
 for(const section of ['words','manuals'])$('#tab-'+section).addEventListener('click',()=>{
   $('#dictionary-section').classList.toggle('hidden',section!=='words');$('#manual-section').classList.toggle('hidden',section!=='manuals');

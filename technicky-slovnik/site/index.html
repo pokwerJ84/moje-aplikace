@@ -10,10 +10,10 @@
     <script src="./theme.js?v=20"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=plum-cards-20261009-v20" />
-    <link rel="stylesheet" href="./styles.css?v=plum-cards-20261009-v20" />
+    <link rel="stylesheet" href="./styles.css?v=word-camera-v21" />
     <link rel="stylesheet" href="./dark.css?v=plum-cards-20261009-v20" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=widget-bridge-v1"></script>
+    <script type="module" src="./app.js?v=word-camera-v21"></script>
   </head>
   <body>
     <main class="workspace">
@@ -76,6 +76,11 @@
     </main>
 
     <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button id="word-close" class="icon-button" type="button" aria-label="Zavřít">×</button></div>
+      <section class="word-photo-tools" aria-label="Photo">
+        <div class="word-photo-actions"><button id="word-take-photo" class="button outline" type="button">📷 <span data-i18n="takePhoto">Vyfotit</span></button><button id="word-pick-photo" class="button outline" type="button">🖼 <span data-i18n="pickPhoto">Vybrat fotku</span></button></div>
+        <div id="word-photo-preview" class="hidden"><a id="word-photo-link" data-photo-zoom><img id="word-photo-image" alt="Photo" /></a><button id="word-remove-photo" class="button outline" type="button" data-i18n="removePhoto">Odebrat fotku</button></div>
+        <p class="hint" data-i18n="draftPhotoHint">Fotka se uloží společně se slovíčkem.</p>
+      </section>
       <div class="dictation-tools"><label for="dictation-language"><span data-i18n="dictationLanguage">Jazyk diktování</span><select id="dictation-language"><option value="ja-JP">日本語</option><option value="en-US">English</option><option value="cs-CZ">Čeština</option></select></label><div class="dictation-buttons"><button id="dictate-word" class="button outline" type="button" data-i18n="dictateWord">🎙 Nadiktovat slovo</button><button id="dictate-description" class="button outline" type="button" data-i18n="dictateDescription">🎙 Nadiktovat popis</button></div></div>
       <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" maxlength="200" /></label>
       <label><span data-i18n="english">Anglicky</span><input name="en" maxlength="200" /></label>
@@ -106,6 +111,8 @@
     <dialog id="detail-dialog" class="dialog"><div id="detail-content"></div></dialog>
     <input id="photo-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
     <input id="camera-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+    <input id="word-photo-input" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+    <input id="word-camera-input" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </body>
 </html>
