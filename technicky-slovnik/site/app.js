@@ -1,6 +1,7 @@
-import { initManuals } from './manuals.js?v=22';
-import { transferLocal, hydrateTransferredWord } from './entry-transfer.js?v=22';
-import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=22';
+import { initManuals } from './manuals.js?v=23';
+import { initWordAudio, recordingURL, audioFormat } from './word-audio.js?v=23';
+import { transferLocal, hydrateTransferredWord } from './entry-transfer.js?v=23';
+import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=23';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { toHiragana } from 'https://esm.sh/wanakana@5.3.1';
 
@@ -37,6 +38,8 @@ Object.assign(words.cs,{pickPhoto:'Vybrat fotku',removePhoto:'Odebrat fotku',dra
 Object.assign(words.en,{pickPhoto:'Choose photo',removePhoto:'Remove photo',draftPhotoHint:'The photo will be saved together with the word.'});
 Object.assign(words.cs,{moveToManual:'Přesunout do přístrojů',confirmMoveManual:'Přesunout položku ze slovníku do přístrojů?',confirmMoveWord:'Přesunout přístroj do slovníku? Kroky a všechny fotky zůstanou uchované pro přesun zpět.',moved:'Položka byla přesunuta.',moveFailed:'Přesun se nepodařil. Původní položka zůstala zachovaná; obnov aplikaci a zkus to znovu.'});
 Object.assign(words.en,{moveToManual:'Move to instruments',confirmMoveManual:'Move this word from vocabulary to instruments?',confirmMoveWord:'Move this instrument to vocabulary? All steps and photos will be retained for moving it back.',moved:'Entry moved.',moveFailed:'Could not move the entry. The original is preserved; reload and try again.'});
+Object.assign(words.cs,{ownAudio:'Výslovnost od kolegy',recordAudio:'Nahrát mikrofonem',stopAudio:'Zastavit nahrávání',uploadAudio:'Vybrat zvukový soubor',removeAudio:'Odebrat nahrávku',audioHint:'Nejvýše 60 sekund přes mikrofon nebo soubor do 10 MB. Nahrávka se uloží se slovíčkem.',audioRecording:'Nahrávám… Po vyslovení slova klepni na Zastavit.',audioReady:'Nahrávka je připravená k uložení.',audioInvalid:'Vyber zvuk MP3, M4A, WAV, WebM, OGG nebo AAC do 10 MB.',audioFailed:'Zvuk se nepodařilo zpracovat.',audioMicError:'Mikrofon se nepodařilo otevřít. Povol přístup k mikrofonu, nebo vyber zvukový soubor.',audioUnsupported:'Tento prohlížeč neumí nahrávat mikrofonem. Můžeš vybrat zvukový soubor.',audioPlayError:'Nahrávku se nepodařilo přehrát. Zkus přehrávač v detailu slovíčka.'});
+Object.assign(words.en,{ownAudio:'Pronunciation by a colleague',recordAudio:'Record with microphone',stopAudio:'Stop recording',uploadAudio:'Choose audio file',removeAudio:'Remove recording',audioHint:'Record up to 60 seconds or choose a file up to 10 MB. Saved together with the word.',audioRecording:'Recording… Tap Stop when the word has been spoken.',audioReady:'Recording ready to save.',audioInvalid:'Choose MP3, M4A, WAV, WebM, OGG or AAC audio up to 10 MB.',audioFailed:'Could not process the audio.',audioMicError:'Could not open the microphone. Allow microphone access or choose an audio file.',audioUnsupported:'Microphone recording is not supported here. You can choose an audio file instead.',audioPlayError:'Could not play the recording. Try the player in the word details.'});
 const $ = (selector) => document.querySelector(selector);
 const state = {language:localStorage.getItem('vocabulary-language') === 'en' ? 'en' : 'cs', user:null, list:[], query:'', selected:null, detailLanguage:'cs', jisho:[], sync:'', authMode:'login', loadingUser:null};
 function readLocalWords() {
@@ -108,7 +111,7 @@ function renderWords() {
   const filtered = state.list.filter(w => [w.ja,w.en,w.cs].some(value => String(value || '').toLocaleLowerCase().includes(term)));
   $('#word-count').textContent = `${filtered.length} ${state.language === 'en' ? (filtered.length === 1 ? 'word' : 'words') : 'slovíček'}`;
   updateAccountStatus();
-  $('#words').innerHTML = filtered.map(w => `<tr class="${!w.ja.trim()||!w.en.trim()?'incomplete':''}"><td colspan="4"><div class="word-row"><div class="word-pair"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja||'—')}</button><button class="word-name word-english" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en||'—')}${w.image_data||w.image_path?' ▧':''}</button></div><button type="button" class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}" ${!w.ja?'disabled':''}><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button type="button" class="icon-button" data-edit="${escapes(w.id)}" title="${escapes(t('editWord'))}" aria-label="${escapes(t('editWord'))}">✎</button></div></td></tr>`).join('');
+  $('#words').innerHTML = filtered.map(w => `<tr class="${!w.ja.trim()||!w.en.trim()?'incomplete':''}"><td colspan="4"><div class="word-row"><div class="word-pair"><button class="word-name ja" data-open="${escapes(w.id)}" data-detail-lang="ja">${escapes(w.ja||'—')}</button><button class="word-name word-english" data-open="${escapes(w.id)}" data-detail-lang="en">${escapes(w.en||'—')}${w.image_data||w.image_path?' ▧':''}</button></div><button type="button" class="speak" data-speak="${escapes(w.id)}" title="${escapes(t('listen'))}" aria-label="${escapes(t('listen'))}: ${escapes(w.ja)}" ${!w.ja&&!w.audio_path&&!w.audio_data?'disabled':''}><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button type="button" class="icon-button" data-edit="${escapes(w.id)}" title="${escapes(t('editWord'))}" aria-label="${escapes(t('editWord'))}">✎</button></div></td></tr>`).join('');
   $('#empty').classList.toggle('hidden', !!state.list.length);
   $('#no-results').classList.toggle('hidden', !state.list.length || !!filtered.length);
   try { window.webkit?.messageHandlers?.widgetWords?.postMessage(state.list.map(({id,ja,en,cs})=>({id:String(id),ja:String(ja||''),en:String(en||''),cs:String(cs||'')}))); } catch(error) { console.debug('Native widget bridge unavailable',error); }
@@ -119,7 +122,12 @@ let speechVoices=window.speechSynthesis?.getVoices()||[];
 const refreshSpeechVoices=()=>{speechVoices=window.speechSynthesis?.getVoices()||[];};
 window.speechSynthesis?.addEventListener('voiceschanged',refreshSpeechVoices);
 window.addEventListener('pageshow',refreshSpeechVoices);
-function speak(word) {
+let ownAudioPlayer=null;
+async function speak(word){
+  if(word.audio_path||word.audio_data){try{ownAudioPlayer?.pause();window.speechSynthesis?.cancel();const url=await recordingURL(supabase,word);ownAudioPlayer=new Audio(url);await ownAudioPlayer.play();}catch(error){showToast(t('audioPlayError'));}return;}
+  ownAudioPlayer?.pause();speakSynth(word);
+}
+function speakSynth(word) {
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return showToast(t('speechError'));
   const raw=String(word.ja||'').trim();if(!raw)return;
   const shortId=String(word.id).split(':').at(-1);
@@ -159,27 +167,29 @@ async function movedWordTerms(){
 async function syncGuestWords(user) {
   const movedTerms=await movedWordTerms();
   const localWords = readLocalWords().filter(w=>!movedTerms.has(termKey(w)));
-  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').order('created_at',{ascending:true});
+  const result = await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data,audio_path').order('created_at',{ascending:true});
   if (result.error) throw result.error;
   const cloudWords = result.data || [];
   const cloudByTerm = new Map(cloudWords.map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w]));
   for (const word of localWords) {
     const key=[word.ja,word.en,word.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|');
     const existing=cloudByTerm.get(key);
-    if(existing&&(!word.image_data||existing.image_path))continue;
-    let image_path=null;
-    if (word.image_data) {
+    if(existing&&(!word.image_data||existing.image_path)&&(!word.audio_data||existing.audio_path))continue;
+    let image_path=existing?.image_path||null;
+    if (word.image_data&&!existing?.image_path) {
       const response=await fetch(word.image_data); const blob=await response.blob();
       const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg');
       image_path=`${user.id}/${crypto.randomUUID()}.${ext}`;
       const uploaded=await supabase.storage.from('dictionary-images').upload(image_path,blob,{upsert:false,contentType:blob.type||'image/jpeg'});
       if(uploaded.error) throw uploaded.error;
     }
-    const row={id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path,manual_data:word.manual_data||null};
-    const {error}=existing ? await supabase.from('dictionary_words').update({image_path}).eq('id',existing.id) : await supabase.from('dictionary_words').insert(row);
+    let audio_path=existing?.audio_path||null;
+    if(word.audio_data&&!audio_path){const blob=await(await fetch(word.audio_data)).blob();const format=audioFormat(blob);audio_path=`${user.id}/${crypto.randomUUID()}.${format.ext}`;const uploaded=await supabase.storage.from('dictionary-audio').upload(audio_path,blob,{upsert:false,contentType:format.mime});if(uploaded.error)throw uploaded.error;}
+    const row={id:`${user.id}:${crypto.randomUUID()}`,ja:word.ja,en:word.en,cs:word.cs,description_ja:word.description_ja||'',description_cs:word.description_cs||'',description_en:word.description_en||'',image_path,manual_data:word.manual_data||null,audio_path};
+    const {error}=existing ? await supabase.from('dictionary_words').update({image_path,audio_path}).eq('id',existing.id) : await supabase.from('dictionary_words').insert(row);
     if(error) throw error;
   }
-  const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').order('created_at',{ascending:true});
+  const refreshed=await supabase.from('dictionary_words').select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data,audio_path').order('created_at',{ascending:true});
   if(refreshed.error) throw refreshed.error;
   const imageByTerm=new Map(localWords.filter(w=>w.image_data).map(w=>[[w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'),w.image_data]));
   const merged=(refreshed.data||[]).map(w=>({...w,description_ja:w.description_ja||starterJa[String(w.id).split(':').at(-1)]||'',image_data:imageByTerm.get([w.ja,w.en,w.cs].map(v=>String(v||'').trim().toLocaleLowerCase()).join('|'))||null}));
@@ -220,8 +230,9 @@ async function showDetails(word, language=state.language) {
   const emptyDescription = t('noDescription');
   const term=word[language]||word.ja;
   const otherTerms=[['ja',word.ja],['en',word.en],['cs',word.cs]].filter(([lang])=>lang!==language).map(([lang,value])=>`<button class="detail-term" type="button" data-description-lang="${lang}"><small>${escapes(t(lang==='ja'?'japanese':lang==='en'?'english':'czech'))}</small><strong>${escapes(value)}</strong></button>`).join('');
-  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button type="button" class="button outline" data-move-to-manual="${escapes(word.id)}">${escapes(t('moveToManual'))}</button><button class="button primary" data-edit="${escapes(word.id)}">${escapes(t('editWord'))}</button><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
+  $('#detail-content').innerHTML = `<div class="dialog-heading"><div><h2 class="detail-title">${escapes(term)}</h2><div class="detail-subtitle detail-terms">${otherTerms}</div></div><button class="icon-button" data-close-detail aria-label="${escapes(t('close'))}">×</button></div><div class="detail-pronunciation"><strong>${escapes(word.ja)}</strong><button class="button outline" data-detail-speak>🔊 ${escapes(t('listen'))}</button></div><p class="definition">${escapes(description || emptyDescription)}</p><div id="detail-recording"></div><div id="detail-photo" class="photo-placeholder">${escapes(t('photoPrompt'))}</div><div class="detail-actions"><button type="button" class="button outline" data-move-to-manual="${escapes(word.id)}">${escapes(t('moveToManual'))}</button><button class="button primary" data-edit="${escapes(word.id)}">${escapes(t('editWord'))}</button><button class="button outline" data-upload="photo">▧ ${escapes(t('addPhoto'))}</button><button class="button outline" data-upload="camera">◉ ${escapes(t('takePhoto'))}</button><button class="button outline" data-delete="${escapes(word.id)}">${escapes(t('delete'))}</button></div><p class="hint">${escapes(t('photoLimit'))}</p>`;
   $('#detail-dialog').showModal();
+  if(word.audio_path||word.audio_data)try{const url=await recordingURL(supabase,word);if(state.selected?.id===word.id)$('#detail-recording').innerHTML=`<p class="hint">${escapes(t('ownAudio'))}</p><audio controls preload="metadata" src="${escapes(url)}"></audio>`;}catch(error){showToast(t('audioPlayError'));}
   if (word.image_data) {
     $('#detail-photo').outerHTML = `<a href="${escapes(word.image_data)}" data-photo-zoom><img class="photo" src="${escapes(word.image_data)}" alt="${escapes(t('addPhoto'))}: ${escapes(word.ja)}" /></a>`;
   } else if (state.user && word.image_path) {
@@ -272,12 +283,12 @@ $('#words').addEventListener('click',event=>{
   const listen=event.target.closest('[data-speak]');if(listen){const word=state.list.find(w=>w.id===listen.dataset.speak);if(word)speak(word);return;}
   const del=event.target.closest('[data-delete]');if(del)void deleteWord(del.dataset.delete);
 });
-$('#add-open').addEventListener('click',()=>{$('#word-form').reset();void wordPhoto.reset();delete $('#word-form').dataset.editId;setMessage($('#form-message'),'');$('#dialog-title').textContent=t('newWord');$('#word-dialog').showModal();});
+$('#add-open').addEventListener('click',()=>{$('#word-form').reset();void wordPhoto.reset();void wordAudio.reset();delete $('#word-form').dataset.editId;setMessage($('#form-message'),'');$('#dialog-title').textContent=t('newWord');$('#word-dialog').showModal();});
 $('#word-close').addEventListener('click',()=>$('#word-dialog').close());
 $('#word-form').addEventListener('submit',async event=>{
-  event.preventDefault();if(wordPhoto.isBusy())return;
+  event.preventDefault();if(wordPhoto.isBusy()||wordAudio.isBusy())return;
   const form=event.currentTarget; const values=Object.fromEntries(new FormData(form)); const submit=form.querySelector('[type=submit]');
-  const user=state.user;wordPhoto.setBusy(true);submit.textContent=t('saving');
+  const user=state.user;wordPhoto.setBusy(true);wordAudio.setBusy(true);submit.textContent=t('saving');
   const editingId=form.dataset.editId;
   const row={id:editingId||crypto.randomUUID(),ja:String(values.ja).trim(),en:String(values.en).trim(),cs:String(values.cs).trim(),description_ja:String(values.description_ja||'').trim(),description_cs:String(values.description_cs||'').trim(),description_en:String(values.description_en||'').trim()};
   try {
@@ -287,13 +298,13 @@ $('#word-form').addEventListener('submit',async event=>{
     for(const target of langs) if(target!==source && !row[target]) row[target]=await translateText(row[source],source,target);
     const descriptionSource=langs.find(lang=>row[`description_${lang}`]);
     if(descriptionSource) for(const target of langs) if(target!==descriptionSource&&!row[`description_${target}`]) row[`description_${target}`]=await translateText(row[`description_${descriptionSource}`],descriptionSource,target);
-  } catch(error) { console.error(error); wordPhoto.setBusy(false);submit.textContent=t('saveWord');setMessage($('#form-message'),error.message||t('translationError'),true);return; }
+  } catch(error) { console.error(error); wordPhoto.setBusy(false);wordAudio.setBusy(false);submit.textContent=t('saveWord');setMessage($('#form-message'),error.message||t('translationError'),true);return; }
   try {
-    const next=await saveWordWithPhoto({supabase,user,row,previous:state.list.find(word=>word.id===editingId),photo:wordPhoto.value(),list:state.list,saveLocalWords});
+    const next=await saveWordWithPhoto({supabase,user,row,previous:state.list.find(word=>word.id===editingId),photo:wordPhoto.value(),audio:wordAudio.value(),list:state.list,saveLocalWords});
     if(state.user?.id===user?.id){state.list=next;renderWords();}
-    $('#word-dialog').close();void wordPhoto.reset();showToast(t('saved'));
+    $('#word-dialog').close();void wordPhoto.reset();void wordAudio.reset();showToast(t('saved'));
   } catch(error) {console.error(error);setMessage($('#form-message'),t('saveError'),true);}
-  finally {wordPhoto.setBusy(false);submit.textContent=t('saveWord');}
+  finally {wordPhoto.setBusy(false);wordAudio.setBusy(false);submit.textContent=t('saveWord');}
 });
 async function deleteWord(id){
   const word=state.list.find(w=>w.id===id);if(!word||!confirm(t('confirmDelete')))return;
@@ -301,6 +312,7 @@ async function deleteWord(id){
     const result=await supabase.from('dictionary_words').delete().eq('id',id);
     if(result.error){console.error(result.error);showToast(t('saveError'));return;}
     const paths=[...new Set([word.image_path,...(word.manual_data?.photos||[]).map(p=>p.path)].filter(Boolean))];if(paths.length)await supabase.storage.from('dictionary-images').remove(paths);
+    if(word.audio_path)await supabase.storage.from('dictionary-audio').remove([word.audio_path]);
   }
   state.list=state.list.filter(w=>w.id!==id);
   if(!state.user&&!saveLocalWords())return;
@@ -309,7 +321,7 @@ async function deleteWord(id){
 function editWord(id){
   const word=state.list.find(w=>w.id===id);if(!word)return;
   $('#detail-dialog').close();$('#word-form').reset();$('#word-form').dataset.editId=id;
-  void wordPhoto.reset(word);
+  void wordPhoto.reset(word);void wordAudio.reset(word);
   for(const name of ['ja','en','cs','description_ja','description_en','description_cs'])$('#word-form').elements[name].value=word[name]||'';
   setMessage($('#form-message'),'');$('#dialog-title').textContent=t('editWord');$('#word-dialog').showModal();
 }
@@ -348,7 +360,7 @@ async function uploadPhoto(file){
   const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'}[file.type];const path=`${state.user.id}/${word.id}-${crypto.randomUUID()}.${ext}`;
   const uploaded=await supabase.storage.from('dictionary-images').upload(path,file,{upsert:false,contentType:file.type});
   if(uploaded.error){console.error(uploaded.error);showToast(t('photoError'));return;}
-  const updated=await supabase.from('dictionary_words').update({image_path:path}).eq('id',word.id).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data').single();
+  const updated=await supabase.from('dictionary_words').update({image_path:path}).eq('id',word.id).select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data,audio_path').single();
   if(updated.error){console.error(updated.error);await supabase.storage.from('dictionary-images').remove([path]);showToast(t('photoError'));return;}
   if(word.image_path&&!(word.manual_data?.photos||[]).some(p=>p.path===word.image_path))await supabase.storage.from('dictionary-images').remove([word.image_path]);
   state.list=state.list.map(w=>w.id===word.id?updated.data:w);saveLocalWords();renderWords();await showDetails(updated.data);showToast(t('photoSaved'));
@@ -383,8 +395,9 @@ document.addEventListener('click',event=>{
 });
 $('#photo-viewer-close').addEventListener('click',()=>$('#photo-viewer').close());
 $('#photo-viewer').addEventListener('close',()=>$('#photo-viewer-image').removeAttribute('src'));
-document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor'&&!(dialog.id==='word-dialog'&&wordPhoto.isBusy()))dialog.close();}));
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog&&dialog.id!=='manual-editor'&&!(dialog.id==='word-dialog'&&(wordPhoto.isBusy()||wordAudio.isBusy())))dialog.close();}));
 
+const wordAudio=initWordAudio({supabase,$,t,setMessage});
 const wordPhoto=initWordPhoto({supabase,$,t,decodePhoto,setMessage});
 const manuals=initManuals({supabase,getUser:()=>state.user,getLanguage:()=>state.language,toast:showToast,decodePhoto,onMoveToWords:entry=>moveEntry('manual',entry)});
 let transferBusy=false;

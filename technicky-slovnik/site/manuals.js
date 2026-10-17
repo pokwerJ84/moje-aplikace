@@ -1,3 +1,4 @@
+import { audioFormat, recordingURL } from './word-audio.js?v=23';
 // Personal measurement notebook. All cloud rows and photos use owner-only RLS.
 export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMoveToWords}) {
   const $=s=>document.querySelector(s);
@@ -26,13 +27,15 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     $('#manual-example').hidden=list.length>0;
 
   }
+  async function cleanupUploads(uploaded){for(const bucket of ['dictionary-images','dictionary-audio']){const paths=uploaded.filter(p=>p.bucket===bucket).map(p=>p.path);if(paths.length)await supabase.storage.from(bucket).remove(paths);}}
   async function uploadPending(row,uploaded){
+    if(row.word_data?.audio_data){const blob=await(await fetch(row.word_data.audio_data)).blob();const format=audioFormat(blob);const path=`${getUser().id}/manual-audio-${crypto.randomUUID()}.${format.ext}`;const result=await supabase.storage.from('dictionary-audio').upload(path,blob,{upsert:false,contentType:format.mime});if(result.error)throw result.error;uploaded.push({bucket:'dictionary-audio',path});row={...row,word_data:{...row.word_data,audio_path:path,audio_data:null}};}
     const photos=[];
     for(const photo of row.photos){
       if(!photo.data){photos.push(photo);continue}
       const blob=await(await fetch(photo.data)).blob();const path=`${getUser().id}/manual-${crypto.randomUUID()}.jpg`;
       const {error}=await supabase.storage.from('dictionary-images').upload(path,blob,{contentType:'image/jpeg'});if(error)throw error;
-      uploaded.push(path);photos.push({id:photo.id,path,caption:photo.caption,stepId:photo.stepId||null,cover:!!photo.cover});
+      uploaded.push({bucket:'dictionary-images',path});photos.push({id:photo.id,path,caption:photo.caption,stepId:photo.stepId||null,cover:!!photo.cover});
     }
     return {...row,photos};
   }
@@ -50,7 +53,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
         if(cloud.some(r=>r.id===id))continue;
         const uploaded=[];
         try{const row=await uploadPending({...local,id},uploaded);const {error}=await supabase.from('dictionary_manuals').insert(row);if(error)throw error;cloud.push(row)}
-        catch(error){if(uploaded.length)await supabase.storage.from('dictionary-images').remove(uploaded);throw error}
+        catch(error){if(uploaded.length)await cleanupUploads(uploaded);throw error}
       }
       if(loadedUser!==user.id)return;
       list=cloud;store(list);localStorage.removeItem('technical-manuals-v1');render();
@@ -67,9 +70,10 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   async function show(row){
     const root=$('#manual-detail-content');
     const cover=coverPhoto(row);
-    root.innerHTML=`<div class="dialog-heading manual-detail-heading"><div><small class="manual-kind">${t(row.kind)}${row.model?' · '+esc(row.model):''}</small>${names(row).map((n,i)=>`<${i?'h3':'h2'}>${esc(n)}</${i?'h3':'h2'}>`).join('')||`<h2>${esc(row.model)}</h2>`}</div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div>${cover?`<div class="manual-cover">${viewPhotos([cover])}</div>`:''}${row.description?`<p class="manual-text manual-description">${esc(row.description)}</p>`:''}${row.steps.length?`<h3 class="manual-section-heading">${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><span class="manual-step-number">${i+1}</span><div class="manual-step-body">${s.title?`<strong>${esc(s.title)}</strong>`:`<strong>${t('step')} ${i+1}</strong>`}${s.text?`<p class="manual-text">${esc(s.text)}</p>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></div></li>`).join('')}</ol>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p!==cover&&!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions manual-detail-actions"><button type="button" class="button outline" data-manual-to-word="${esc(row.id)}">${t('moveToWords')}</button><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
+    root.innerHTML=`<div class="dialog-heading manual-detail-heading"><div><small class="manual-kind">${t(row.kind)}${row.model?' · '+esc(row.model):''}</small>${names(row).map((n,i)=>`<${i?'h3':'h2'}>${esc(n)}</${i?'h3':'h2'}>`).join('')||`<h2>${esc(row.model)}</h2>`}</div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div><div data-manual-audio></div>${cover?`<div class="manual-cover">${viewPhotos([cover])}</div>`:''}${row.description?`<p class="manual-text manual-description">${esc(row.description)}</p>`:''}${row.steps.length?`<h3 class="manual-section-heading">${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><span class="manual-step-number">${i+1}</span><div class="manual-step-body">${s.title?`<strong>${esc(s.title)}</strong>`:`<strong>${t('step')} ${i+1}</strong>`}${s.text?`<p class="manual-text">${esc(s.text)}</p>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></div></li>`).join('')}</ol>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p!==cover&&!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions manual-detail-actions"><button type="button" class="button outline" data-manual-to-word="${esc(row.id)}">${t('moveToWords')}</button><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
 
     $('#manual-detail').showModal();
+    if(row.word_data?.audio_path||row.word_data?.audio_data)try{const url=await recordingURL(supabase,row.word_data);if($('#manual-detail').open&&root.querySelector('[data-manual-to-word]')?.dataset.manualToWord===row.id)root.querySelector('[data-manual-audio]').innerHTML=`<audio controls preload="metadata" style="width:100%" src="${esc(url)}"></audio>`;}catch(error){console.warn(error);}
     for(const photo of row.photos){try{const url=await signedPhoto(photo);const target=[...root.querySelectorAll('[data-manual-photo]')].find(e=>e.dataset.manualPhoto===photo.id);if(target)target.innerHTML=`<a href="${esc(url)}" data-photo-zoom aria-label="${esc(t('photos'))}"><img src="${esc(url)}" alt="${esc(photo.caption)}" /></a>`}catch{toast(t('photoError'))}}
   }
   function collect(){
@@ -128,7 +132,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   async function deleteGuide(id){
     if(busy||!confirm(t('confirm')))return;busy=true;
     try{const row=list.find(r=>r.id===id);const next=list.filter(r=>r.id!==id);
-      if(getUser()){const {error}=await supabase.from('dictionary_manuals').delete().eq('id',id);if(error)throw error;const paths=row.photos.map(p=>p.path).filter(Boolean);if(paths.length)await supabase.storage.from('dictionary-images').remove(paths)}else store(next);
+      if(getUser()){const {error}=await supabase.from('dictionary_manuals').delete().eq('id',id);if(error)throw error;const paths=row.photos.map(p=>p.path).filter(Boolean);if(paths.length)await supabase.storage.from('dictionary-images').remove(paths);if(row.word_data?.audio_path)await supabase.storage.from('dictionary-audio').remove([row.word_data.audio_path]);}else store(next);
       list=next;if(getUser())try{store(list)}catch{}render();$('#manual-detail').close();
     }catch(error){toast(t('error'))}finally{busy=false}
   }
@@ -145,7 +149,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
       if(!getUser())store(next);list=next;if(getUser())try{store(list)}catch{}
       if(getUser()&&previous){const paths=previous.photos.map(p=>p.path).filter(p=>p&&!row.photos.some(n=>n.path===p));if(paths.length)await supabase.storage.from('dictionary-images').remove(paths)}
       render();$('#manual-editor').close();toast(t('saved'));
-    }catch(error){console.error(error);if(uploaded.length)await supabase.storage.from('dictionary-images').remove(uploaded);$('#manual-message').textContent=t('error')}
+    }catch(error){console.error(error);if(uploaded.length)await cleanupUploads(uploaded);$('#manual-message').textContent=t('error')}
     finally{busy=false;setSaveBusy(false)}
   };
   list=read();render();return {setUser,render,getEntries:()=>list,replaceEntries:rows=>{list=rows;render();}};

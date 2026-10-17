@@ -10,10 +10,10 @@
     <script src="./theme.js?v=20"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=plum-cards-20261009-v20" />
-    <link rel="stylesheet" href="./styles.css?v=word-camera-v21" />
+    <link rel="stylesheet" href="./styles.css?v=word-audio-v23" />
     <link rel="stylesheet" href="./dark.css?v=plum-cards-20261009-v20" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=entry-transfer-v22"></script>
+    <script type="module" src="./app.js?v=word-audio-v23"></script>
   </head>
   <body>
     <main class="workspace">
@@ -81,6 +81,12 @@
         <div id="word-photo-preview" class="hidden"><a id="word-photo-link" data-photo-zoom><img id="word-photo-image" alt="Photo" /></a><button id="word-remove-photo" class="button outline" type="button" data-i18n="removePhoto">Odebrat fotku</button></div>
         <p class="hint" data-i18n="draftPhotoHint">Fotka se uloží společně se slovíčkem.</p>
       </section>
+      <section class="word-audio-tools" aria-label="Pronunciation recording">
+        <h3 data-i18n="ownAudio">Výslovnost od kolegy</h3>
+        <div class="word-photo-actions"><button id="word-record-audio" class="button outline" type="button" data-i18n="recordAudio">Nahrát mikrofonem</button><button id="word-stop-audio" class="button primary" type="button" data-i18n="stopAudio" hidden>Zastavit nahrávání</button><button id="word-upload-audio" class="button outline" type="button" data-i18n="uploadAudio">Vybrat zvukový soubor</button></div>
+        <p id="word-audio-status" class="hint" role="status"></p><div id="word-audio-preview" class="hidden"><audio id="word-audio-player" controls preload="metadata"></audio><button id="word-remove-audio" class="button outline" type="button" data-i18n="removeAudio">Odebrat nahrávku</button></div>
+        <p class="hint" data-i18n="audioHint">Nahrávka se uloží se slovíčkem.</p>
+      </section>
       <div class="dictation-tools"><label for="dictation-language"><span data-i18n="dictationLanguage">Jazyk diktování</span><select id="dictation-language"><option value="ja-JP">日本語</option><option value="en-US">English</option><option value="cs-CZ">Čeština</option></select></label><div class="dictation-buttons"><button id="dictate-word" class="button outline" type="button" data-i18n="dictateWord">🎙 Nadiktovat slovo</button><button id="dictate-description" class="button outline" type="button" data-i18n="dictateDescription">🎙 Nadiktovat popis</button></div></div>
       <label><span data-i18n="japaneseRomaji">Japonsky v rómadži</span><input name="ja" maxlength="200" /></label>
       <label><span data-i18n="english">Anglicky</span><input name="en" maxlength="200" /></label>
@@ -113,6 +119,7 @@
     <input id="camera-file" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
     <input id="word-photo-input" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
     <input id="word-camera-input" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+    <input id="word-audio-input" class="hidden" type="file" accept="audio/*,.mp3,.m4a,.wav,.webm,.ogg,.aac" />
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </body>
 </html>
