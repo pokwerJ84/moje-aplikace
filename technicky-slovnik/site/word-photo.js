@@ -75,7 +75,7 @@ export async function saveWordWithPhoto({supabase,user,row,previous,photo,audio=
         }
       }
       const query=previous?supabase.from('dictionary_words').update(row).eq('id',row.id):supabase.from('dictionary_words').insert(row);
-      const result=await query.select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data,audio_path').single();
+      const result=await query.select('id,ja,en,cs,description_ja,description_cs,description_en,image_path,manual_data,audio_path,folder').single();
       if(result.error)throw result.error;
       saved={...result.data,image_data:photo.changed?photo.data:previous?.image_data||null,audio_data:audio.changed?audio.data:previous?.audio_data||null};
     } catch(error) {

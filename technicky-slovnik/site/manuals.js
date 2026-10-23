@@ -1,3 +1,4 @@
+import { pdfDraft, uploadDocuments, openDocument, removedDocumentPaths } from './manual-documents.js?v=24';
 import { audioFormat, recordingURL } from './word-audio.js?v=23';
 // Personal measurement notebook. All cloud rows and photos use owner-only RLS.
 export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMoveToWords}) {
@@ -5,6 +6,8 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const labels={cs:{tab:'Přístroje',title:'Přístroje a postupy',help:'Vlastní poznámky z měření, návody krok za krokem a fotky.',add:'Přidat přístroj / postup',example:'Začít s KEYENCE VR3000',search:'Filtrovat přístroje…',instrument:'Přístroj',procedure:'Postup měření',model:'Výrobce / model',ja:'Japonský název (rómadži nebo znaky)',en:'Anglický název',description:'Co to je / k čemu to slouží',steps:'Postup krok za krokem',step:'Krok',stepTitle:'Název kroku',instructions:'Jak postupovat',addStep:'Přidat krok',cover:'Hlavní fotka přístroje',addCover:'Přidat / změnit hlavní fotku',photos:'Fotky a jejich popisky',addPhotos:'Přidat fotky',camera:'Vyfotit',caption:'Popisek / číslo kroku',saveShort:'Uložit',save:'Uložit návod',edit:'Upravit',remove:'Smazat',close:'Zavřít',empty:'Zatím žádné návody. Přidej první přístroj nebo postup.',noResults:'Žádný výsledek.',saved:'Návod uložen.',error:'Návod se nepodařilo uložit. Zkus to znovu; u místních fotek může být plné úložiště. Přihlášení umožní ukládat fotky do účtu.',loadError:'Návody se nepodařilo načíst. Zkus Načíst znovu.',retry:'Načíst znovu',local:'Uloženo jen v tomto zařízení',cloud:'Uloženo v účtu',required:'Vyplň alespoň název nebo model.',confirm:'Opravdu smazat tento návod?',photoError:'Použij obrázek JPG, PNG nebo WebP do 8 MB.',missing:'Chybí japonský nebo anglický název',up:'Nahoru',down:'Dolů',saving:'Ukládám…',notes:'Vlastní návod — ověř postup podle školení a dokumentace přístroje.'},en:{tab:'Instruments',title:'Instruments & procedures',help:'Your measurement notes, step-by-step guides and photos.',add:'Add instrument / procedure',example:'Start with KEYENCE VR3000',search:'Filter instruments…',instrument:'Instrument',procedure:'Measurement procedure',model:'Manufacturer / model',ja:'Japanese name (romaji or characters)',en:'English name',description:'What it is / what it is used for',steps:'Step-by-step procedure',step:'Step',stepTitle:'Step title',instructions:'Instructions',addStep:'Add step',cover:'Main instrument photo',addCover:'Add / change main photo',photos:'Photos and captions',addPhotos:'Add photos',camera:'Take photo',caption:'Caption / step number',saveShort:'Save',save:'Save guide',edit:'Edit',remove:'Delete',close:'Close',empty:'No guides yet. Add your first instrument or procedure.',noResults:'No matches.',saved:'Guide saved.',error:'Could not save the guide. Please retry; local photo storage may be full. Sign in to save photos to your account.',loadError:'Could not load guides. Try Reload.',retry:'Reload',local:'Stored on this device only',cloud:'Saved to your account',required:'Enter a name or model.',confirm:'Delete this guide?',photoError:'Use JPG, PNG or WebP images up to 8 MB.',missing:'Japanese or English name missing',up:'Move up',down:'Move down',saving:'Saving…',notes:'Personal guide — check your procedure against training and instrument documentation.'}};
   labels.cs.moveToWords='Přesunout do slovníku';labels.en.moveToWords='Move to vocabulary';
+  Object.assign(labels.cs,{documents:'PDF manuály',addPDF:'Přidat PDF',openPDF:'Otevřít PDF',pdfHint:'PDF do 20 MB. Přílohy se uloží po stisknutí Uložit návod.',pdfInvalid:'Vyber platný soubor PDF do 20 MB.',pdfPopup:'Povol otevírání nových oken pro zobrazení PDF.',pdfError:'PDF se nepodařilo otevřít. Zkus to znovu.',error:'Návod se nepodařilo uložit. Zkus to znovu. Pokud je místní úložiště plné, přihlas se a ulož soubory do účtu.'});
+  Object.assign(labels.en,{documents:'PDF manuals',addPDF:'Add PDF',openPDF:'Open PDF',pdfHint:'PDF files up to 20 MB. Attachments are saved when you select Save guide.',pdfInvalid:'Choose a valid PDF file up to 20 MB.',pdfPopup:'Allow pop-ups to open the PDF.',pdfError:'Could not open the PDF. Please retry.',error:'Could not save the guide. Please retry. If device storage is full, sign in to save files to your account.'});
   const t=k=>labels[getLanguage()][k];
   const key=()=> 'technical-manuals-v1'+(getUser()?':'+getUser().id:'');
   let list=[],draft=null,busy=false,loadedUser=null,loadFailed=false,photoStep=null;
@@ -27,7 +30,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     $('#manual-example').hidden=list.length>0;
 
   }
-  async function cleanupUploads(uploaded){for(const bucket of ['dictionary-images','dictionary-audio']){const paths=uploaded.filter(p=>p.bucket===bucket).map(p=>p.path);if(paths.length)await supabase.storage.from(bucket).remove(paths);}}
+  async function cleanupUploads(uploaded){for(const bucket of ['dictionary-images','dictionary-audio','dictionary-documents']){const paths=uploaded.filter(p=>p.bucket===bucket).map(p=>p.path);if(paths.length)await supabase.storage.from(bucket).remove(paths);}}
   async function uploadPending(row,uploaded){
     if(row.word_data?.audio_data){const blob=await(await fetch(row.word_data.audio_data)).blob();const format=audioFormat(blob);const path=`${getUser().id}/manual-audio-${crypto.randomUUID()}.${format.ext}`;const result=await supabase.storage.from('dictionary-audio').upload(path,blob,{upsert:false,contentType:format.mime});if(result.error)throw result.error;uploaded.push({bucket:'dictionary-audio',path});row={...row,word_data:{...row.word_data,audio_path:path,audio_data:null}};}
     const photos=[];
@@ -37,7 +40,8 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
       const {error}=await supabase.storage.from('dictionary-images').upload(path,blob,{contentType:'image/jpeg'});if(error)throw error;
       uploaded.push({bucket:'dictionary-images',path});photos.push({id:photo.id,path,caption:photo.caption,stepId:photo.stepId||null,cover:!!photo.cover});
     }
-    return {...row,photos};
+    const documents=await uploadDocuments(supabase,getUser(),row.documents,uploaded);
+    return {...row,photos,documents};
   }
   async function setUser(){
     const user=getUser();loadedUser=user?.id||null;loadFailed=false;
@@ -67,10 +71,13 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   const names=row=>[row.ja,row.en].filter(v=>v?.trim());
   const viewPhotos=photos=>photos.map(p=>`<figure><div data-manual-photo="${esc(p.id)}"></div><figcaption>${esc(p.caption)}</figcaption></figure>`).join('');
   const editPhotos=photos=>photos.map(p=>`<figure><div data-draft-photo="${esc(p.id)}">${p.data?`<img src="${esc(p.data)}" alt="" />`:''}</div><input data-photo-caption="${esc(p.id)}" maxlength="500" placeholder="${t('caption')}" value="${esc(p.caption)}" /><button type="button" class="button outline" data-photo-remove="${esc(p.id)}">${t('remove')}</button></figure>`).join('');
+  const documentList=(documents,editable=false)=>(documents||[]).map(d=>`<div class="manual-document"><div><strong>${esc(d.name)}</strong><small>${(d.size/1024/1024).toFixed(1)} MB</small></div><div class="manual-actions"><button type="button" class="button outline" data-pdf-open="${esc(d.id)}" data-pdf-editor="${editable?'1':'0'}">${t('openPDF')}</button>${editable?`<button type="button" class="button outline" data-pdf-remove="${esc(d.id)}">${t('remove')}</button>`:''}</div></div>`).join('');
+  let detailId=null;
   async function show(row){
+    detailId=row.id;
     const root=$('#manual-detail-content');
     const cover=coverPhoto(row);
-    root.innerHTML=`<div class="dialog-heading manual-detail-heading"><div><small class="manual-kind">${t(row.kind)}${row.model?' · '+esc(row.model):''}</small>${names(row).map((n,i)=>`<${i?'h3':'h2'}>${esc(n)}</${i?'h3':'h2'}>`).join('')||`<h2>${esc(row.model)}</h2>`}</div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div><div data-manual-audio></div>${cover?`<div class="manual-cover">${viewPhotos([cover])}</div>`:''}${row.description?`<p class="manual-text manual-description">${esc(row.description)}</p>`:''}${row.steps.length?`<h3 class="manual-section-heading">${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><span class="manual-step-number">${i+1}</span><div class="manual-step-body">${s.title?`<strong>${esc(s.title)}</strong>`:`<strong>${t('step')} ${i+1}</strong>`}${s.text?`<p class="manual-text">${esc(s.text)}</p>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></div></li>`).join('')}</ol>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p!==cover&&!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions manual-detail-actions"><button type="button" class="button outline" data-manual-to-word="${esc(row.id)}">${t('moveToWords')}</button><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
+    root.innerHTML=`<div class="dialog-heading manual-detail-heading"><div><small class="manual-kind">${t(row.kind)}${row.model?' · '+esc(row.model):''}</small>${names(row).map((n,i)=>`<${i?'h3':'h2'}>${esc(n)}</${i?'h3':'h2'}>`).join('')||`<h2>${esc(row.model)}</h2>`}</div><button type="button" class="icon-button" data-manual-close="manual-detail" aria-label="${t('close')}">×</button></div><div data-manual-audio></div>${row.documents?.length?`<section class="manual-documents"><h3>${t('documents')}</h3>${documentList(row.documents)}</section>`:''}${cover?`<div class="manual-cover">${viewPhotos([cover])}</div>`:''}${row.description?`<p class="manual-text manual-description">${esc(row.description)}</p>`:''}${row.steps.length?`<h3 class="manual-section-heading">${t('steps')}</h3><ol class="manual-view-steps">${row.steps.map((s,i)=>`<li><span class="manual-step-number">${i+1}</span><div class="manual-step-body">${s.title?`<strong>${esc(s.title)}</strong>`:`<strong>${t('step')} ${i+1}</strong>`}${s.text?`<p class="manual-text">${esc(s.text)}</p>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p.stepId===(s.id||`legacy-step-${i}`)))}</div></div></li>`).join('')}</ol>`:''}<div class="manual-gallery">${viewPhotos(row.photos.filter(p=>p!==cover&&!p.cover&&(!p.stepId||!row.steps.some((s,i)=>(s.id||`legacy-step-${i}`)===p.stepId))))}</div><div class="manual-actions manual-detail-actions"><button type="button" class="button outline" data-manual-to-word="${esc(row.id)}">${t('moveToWords')}</button><button type="button" class="button primary" data-manual-edit="${esc(row.id)}">${t('edit')}</button><button type="button" class="button outline" data-manual-delete="${esc(row.id)}">${t('remove')}</button></div>`;
 
     $('#manual-detail').showModal();
     if(row.word_data?.audio_path||row.word_data?.audio_data)try{const url=await recordingURL(supabase,row.word_data);if($('#manual-detail').open&&root.querySelector('[data-manual-to-word]')?.dataset.manualToWord===row.id)root.querySelector('[data-manual-audio]').innerHTML=`<audio controls preload="metadata" style="width:100%" src="${esc(url)}"></audio>`;}catch(error){console.warn(error);}
@@ -82,6 +89,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     $('#manual-editor').querySelectorAll('[data-photo-caption]').forEach(e=>{draft.photos.find(p=>p.id===e.dataset.photoCaption).caption=e.value});
   }
   function renderDraft(){
+    $('#manual-documents').innerHTML=documentList(draft.documents,true);
     $('#manual-steps').innerHTML=draft.steps.map((s,i)=>`<div class="manual-step" data-step-id="${esc(s.id)}"><strong>${t('step')} ${i+1}</strong><input data-step-title maxlength="200" placeholder="${t('stepTitle')}" value="${esc(s.title)}" /><textarea data-step-text rows="3" maxlength="10000" placeholder="${t('instructions')}">${esc(s.text)}</textarea><div class="manual-gallery">${editPhotos(draft.photos.filter(p=>p.stepId===s.id))}</div><div class="manual-actions"><button type="button" class="button outline" data-step-photos="${esc(s.id)}">${t('addPhotos')}</button><button type="button" class="button outline" data-step-camera="${esc(s.id)}">${t('camera')}</button></div><div class="manual-actions"><button type="button" class="button outline" data-step-up="${i}" ${i===0?'disabled':''}>↑ ${t('up')}</button><button type="button" class="button outline" data-step-down="${i}" ${i===draft.steps.length-1?'disabled':''}>↓ ${t('down')}</button><button type="button" class="button outline" data-step-remove="${i}">${t('remove')}</button></div></div>`).join('');
     $('#manual-cover-photo').innerHTML=editPhotos(draft.photos.filter(p=>p.cover));
     $('#manual-photos').innerHTML=editPhotos(draft.photos.filter(p=>!p.stepId&&!p.cover));
@@ -89,6 +97,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   }
   function edit(row){
     draft=structuredClone(row||{id:crypto.randomUUID(),kind:'instrument',ja:'',en:'',model:'',description:'',steps:[],photos:[]});
+    draft.documents=draft.documents||[];
     const cover=coverPhoto(draft);if(cover)cover.cover=true;
     draft.steps=draft.steps.map((step,i)=>({...step,id:step.id||`legacy-step-${i}`}));
     photoStep=null;
@@ -111,6 +120,13 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
       }
     }catch(error){toast(error.message)}finally{renderDraft();busy=false;setSaveBusy(false)}
   }
+  $('#manual-add-pdf').onclick=()=>{if(!busy)$('#manual-pdf-files').click()};
+  $('#manual-pdf-files').onchange=async e=>{
+    if(busy)return;const files=[...e.target.files];e.target.value='';busy=true;setSaveBusy(true);
+    try{collect();const documents=[];for(const file of files)documents.push(await pdfDraft(file));draft.documents.push(...documents);renderDraft();}
+    catch(error){$('#manual-message').textContent=t(error.message==='pdfInvalid'?'pdfInvalid':'error');}
+    finally{busy=false;setSaveBusy(false);}
+  };
   $('#manual-add').onclick=()=>edit();$('#manual-example').onclick=()=>{edit();$('#manual-form').elements.en.value='3D scanner';$('#manual-form').elements.model.value='KEYENCE VR3000'};
   $('#manual-search').oninput=render;$('#manual-retry').onclick=()=>void setUser();
   $('#manual-list').onclick=e=>{const b=e.target.closest('[data-manual-open]');if(b)void show(list.find(r=>r.id===b.dataset.manualOpen))};
@@ -120,6 +136,10 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   for(const id of ['manual-photo-files','manual-camera-file'])$('#'+id).onchange=e=>{void addPhotos([...e.target.files],photoStep);e.target.value=''};
   $('#manual-editor').addEventListener('cancel',e=>{if(busy)e.preventDefault()});
   document.addEventListener('click',e=>{
+    const pdf=e.target.closest('[data-pdf-open]');
+    if(pdf&&!busy){const row=pdf.dataset.pdfEditor==='1'?draft:list.find(r=>r.id===detailId);const document=row?.documents?.find(d=>d.id===pdf.dataset.pdfOpen);if(document)void openDocument(supabase,document).catch(error=>toast(t(error.message==='pdfPopup'?'pdfPopup':'pdfError')));}
+    const removePDF=e.target.closest('[data-pdf-remove]');if(removePDF&&!busy){collect();draft.documents=draft.documents.filter(d=>d.id!==removePDF.dataset.pdfRemove);renderDraft();}
+
     const move=e.target.closest('[data-manual-to-word]');if(move&&!busy)void onMoveToWords?.(list.find(row=>row.id===move.dataset.manualToWord));
     const stepPhotos=e.target.closest('[data-step-photos]');if(stepPhotos&&!busy){photoStep=stepPhotos.dataset.stepPhotos;$('#manual-photo-files').click()}
     const stepCamera=e.target.closest('[data-step-camera]');if(stepCamera&&!busy){photoStep=stepCamera.dataset.stepCamera;$('#manual-camera-file').click()}
@@ -132,7 +152,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   async function deleteGuide(id){
     if(busy||!confirm(t('confirm')))return;busy=true;
     try{const row=list.find(r=>r.id===id);const next=list.filter(r=>r.id!==id);
-      if(getUser()){const {error}=await supabase.from('dictionary_manuals').delete().eq('id',id);if(error)throw error;const paths=row.photos.map(p=>p.path).filter(Boolean);if(paths.length)await supabase.storage.from('dictionary-images').remove(paths);if(row.word_data?.audio_path)await supabase.storage.from('dictionary-audio').remove([row.word_data.audio_path]);}else store(next);
+      if(getUser()){const {error}=await supabase.from('dictionary_manuals').delete().eq('id',id);if(error)throw error;const paths=row.photos.map(p=>p.path).filter(Boolean);if(paths.length)await supabase.storage.from('dictionary-images').remove(paths);if(row.word_data?.audio_path)await supabase.storage.from('dictionary-audio').remove([row.word_data.audio_path]);const documents=removedDocumentPaths(row.documents,[]);if(documents.length)await supabase.storage.from('dictionary-documents').remove(documents);}else store(next);
       list=next;if(getUser())try{store(list)}catch{}render();$('#manual-detail').close();
     }catch(error){toast(t('error'))}finally{busy=false}
   }
@@ -143,11 +163,12 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
       const previous=list.find(r=>r.id===draft.id);let row=structuredClone(draft);
       if(getUser()){
         row=await uploadPending(row,uploaded);
-        const {error}=previous?await supabase.from('dictionary_manuals').update({kind:row.kind,ja:row.ja,en:row.en,model:row.model,description:row.description,steps:row.steps,photos:row.photos}).eq('id',row.id):await supabase.from('dictionary_manuals').insert(row);if(error)throw error;
+        const {error}=previous?await supabase.from('dictionary_manuals').update({kind:row.kind,ja:row.ja,en:row.en,model:row.model,description:row.description,steps:row.steps,photos:row.photos,documents:row.documents,word_data:row.word_data||null}).eq('id',row.id):await supabase.from('dictionary_manuals').insert(row);if(error)throw error;
       }
       const next=previous?list.map(r=>r.id===row.id?row:r):[...list,row];
       if(!getUser())store(next);list=next;if(getUser())try{store(list)}catch{}
-      if(getUser()&&previous){const paths=previous.photos.map(p=>p.path).filter(p=>p&&!row.photos.some(n=>n.path===p));if(paths.length)await supabase.storage.from('dictionary-images').remove(paths)}
+      if(getUser()&&previous){const paths=previous.photos.map(p=>p.path).filter(p=>p&&!row.photos.some(n=>n.path===p));if(paths.length)try{await supabase.storage.from('dictionary-images').remove(paths)}catch(error){console.warn(error)}}
+      if(getUser()&&previous){const paths=removedDocumentPaths(previous.documents,row.documents);if(paths.length)try{await supabase.storage.from('dictionary-documents').remove(paths)}catch(error){console.warn(error)}}
       render();$('#manual-editor').close();toast(t('saved'));
     }catch(error){console.error(error);if(uploaded.length)await cleanupUploads(uploaded);$('#manual-message').textContent=t('error')}
     finally{busy=false;setSaveBusy(false)}

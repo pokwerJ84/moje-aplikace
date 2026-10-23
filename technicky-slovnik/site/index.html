@@ -10,10 +10,10 @@
     <script src="./theme.js?v=20"></script>
     <title>Technický slovník</title>
     <link rel="icon" type="image/svg+xml" href="./icon.svg?v=plum-cards-20261009-v20" />
-    <link rel="stylesheet" href="./styles.css?v=word-audio-v23" />
+    <link rel="stylesheet" href="./styles.css?v=pdf-v24" />
     <link rel="stylesheet" href="./dark.css?v=plum-cards-20261009-v20" />
     <script src="./updater.js?v=6"></script>
-    <script type="module" src="./app.js?v=word-audio-v23"></script>
+    <script type="module" src="./app.js?v=pdf-v24"></script>
   </head>
   <body>
     <main class="workspace">
@@ -52,7 +52,7 @@
       </section>
 
       <div id="app-panel">
-        <nav class="section-tabs" aria-label="Sections"><button type="button" id="tab-words" aria-pressed="true" data-i18n="wordsTab">Slovíčka</button><button type="button" id="tab-manuals" aria-pressed="false" data-manual-label="tab">Přístroje</button></nav>
+        <nav class="section-tabs" aria-label="Sections"><button type="button" id="tab-words" aria-pressed="true" data-i18n="wordsTab">Slovíčka</button><button type="button" id="tab-manuals" aria-pressed="false" data-manual-label="tab">Přístroje</button><button type="button" id="tab-personal" aria-pressed="false" data-i18n="personalTab">Moje</button></nav>
         <section id="dictionary-section" class="panel dictionary">
           <div class="section-title"><div><h1 data-i18n="myWords">Můj slovník</h1></div><span id="word-count" class="count">0 slovíček</span></div>
           <div class="toolbar">
@@ -76,6 +76,7 @@
     </main>
 
     <dialog id="word-dialog" class="dialog"><form id="word-form" method="dialog"><div class="dialog-heading"><div><h2 id="dialog-title" data-i18n="newWord">Nové slovíčko</h2><p data-i18n="allLanguages">Vyplň výraz a případně popis jen v jednom jazyce.</p></div><button id="word-close" class="icon-button" type="button" aria-label="Zavřít">×</button></div>
+      <label><span data-i18n="folder">Složka</span><select name="folder"><option value="words" data-i18n="wordsTab">Words</option><option value="personal" data-i18n="personalTab">Moje</option></select></label>
       <section class="word-photo-tools" aria-label="Photo">
         <div class="word-photo-actions"><button id="word-take-photo" class="button outline" type="button">📷 <span data-i18n="takePhoto">Vyfotit</span></button><button id="word-pick-photo" class="button outline" type="button">🖼 <span data-i18n="pickPhoto">Vybrat fotku</span></button></div>
         <div id="word-photo-preview" class="hidden"><a id="word-photo-link" data-photo-zoom><img id="word-photo-image" alt="Photo" /></a><button id="word-remove-photo" class="button outline" type="button" data-i18n="removePhoto">Odebrat fotku</button></div>
@@ -108,6 +109,7 @@
       <label><span data-manual-label="description"></span><textarea name="description" rows="3" maxlength="10000"></textarea></label>
       <h3 data-manual-label="steps"></h3><div id="manual-steps"></div><button id="manual-add-step" class="button outline" type="button" data-manual-label="addStep"></button>
       <h3 data-manual-label="photos"></h3><div id="manual-photos" class="manual-gallery"></div><div class="manual-actions"><button id="manual-add-photos" type="button" class="button outline" data-manual-label="addPhotos"></button><button id="manual-camera" type="button" class="button outline" data-manual-label="camera"></button></div>
+      <section class="manual-documents"><h3 data-manual-label="documents"></h3><div id="manual-documents"></div><button id="manual-add-pdf" type="button" class="button outline" data-manual-label="addPDF"></button><input id="manual-pdf-files" type="file" accept="application/pdf,.pdf" multiple hidden /><p class="hint" data-manual-label="pdfHint"></p></section>
       <p class="hint" data-manual-label="notes"></p><p id="manual-message" role="alert" class="message error"></p><button id="manual-save" data-manual-save type="submit" class="button primary" data-manual-label="save"></button>
     </form></dialog>
     <dialog id="manual-detail" class="dialog manual-dialog"><div id="manual-detail-content"></div></dialog>
