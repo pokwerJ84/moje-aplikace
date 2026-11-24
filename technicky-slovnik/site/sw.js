@@ -1,4 +1,4 @@
-const VERSION = "v25";
+const VERSION = "v26";
 const CACHE = `technical-dictionary-${VERSION}`;
 const OWN_CACHE_PREFIX = "technical-dictionary-";
 const CORE = ["./", "./index.html", "./styles.css", "./app.js", "./word-photo.js", "./word-audio.js", "./entry-transfer.js", "./manuals.js", "./manual-order.js", "./manual-documents.js", "./word-folders.js", "./updater.js", "./icon.svg", "./theme.js", "./dark.css", "./apple-touch-icon-v11.png", "./icon-192-v11.png", "./icon-512-v11.png", "./manifest.webmanifest"];

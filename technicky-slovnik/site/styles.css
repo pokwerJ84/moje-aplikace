@@ -204,3 +204,38 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .manual-order-controls .icon-button{min-width:32px;min-height:44px;padding:4px}
 .is-arranging .manual-fold{border-style:dashed}.manual-fold.is-dragging{opacity:.6;border-color:var(--plum);box-shadow:0 0 0 2px var(--plum)}
 @media(max-width:480px){.manual-summary{padding:10px;gap:8px}.manual-card-heading .manual-name-pair{display:block}.manual-order-controls{gap:0}.manual-order-controls .icon-button{min-width:28px}.manual-drag-handle{min-width:30px}.manual-card-body{padding:8px 12px 14px}.manual-list-tools{gap:5px}}
+
+/* Instruments: one compact row, one tap directly to the guide. */
+#manual-expand,#manual-collapse{display:none!important}
+#manual-section .manual-list-tools{margin:4px 0 10px;justify-content:flex-end}
+#manual-section .manual-list-tools .button{min-height:32px;padding:5px 12px;font-size:13px;border-radius:8px}
+#manual-list.manual-list{gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white)}
+.instrument-row{display:flex;align-items:center;border-bottom:1px solid var(--line);min-width:0;background:var(--white)}
+.instrument-row:last-child{border-bottom:0}
+.instrument-row-open{flex:1;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;border:0;border-radius:0;background:transparent;color:var(--ink);padding:10px 12px;min-height:54px;font:inherit;cursor:pointer}
+.instrument-row-open:focus-visible{outline:2px solid var(--plum);outline-offset:-3px}
+.instrument-row-text{flex:1;min-width:0}
+.instrument-row-text strong{display:block;font-size:14px!important;font-weight:600!important;line-height:1.3;margin:0!important;overflow-wrap:anywhere}
+.instrument-row-text small{display:block;color:var(--muted);font-size:11px;line-height:1.3;margin-top:3px;overflow-wrap:anywhere}
+.instrument-row-arrow{color:var(--muted);font-size:21px;font-weight:400}
+.instrument-row .manual-order-controls{padding-right:6px}.instrument-row .manual-drag-handle{font-size:21px}
+.is-arranging .instrument-row-open{cursor:default}.is-arranging .instrument-row-arrow{display:none}
+.instrument-row.is-dragging{opacity:.5;background:var(--wash)}
+#manual-detail{padding:18px;max-width:680px;border-radius:14px}
+#manual-detail .manual-detail-heading{position:sticky;top:-18px;background:var(--white);z-index:2;padding:12px 0;margin:0 0 14px;gap:12px;border-bottom:1px solid var(--line)}
+#manual-detail .manual-detail-heading h2{font-size:19px;line-height:1.3;margin:4px 0;font-weight:650}
+#manual-detail .manual-detail-heading h3{font-size:13px;line-height:1.4;margin:3px 0;color:var(--muted);font-weight:400}
+#manual-detail .manual-kind{font-size:11px;color:var(--muted)}
+#manual-detail .manual-cover{width:100%;max-width:100%;margin:0 0 16px}
+#manual-detail .manual-cover figure{margin:0}
+#manual-detail .manual-cover img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain;border-radius:6px;background:transparent}
+#manual-detail .manual-description,#manual-detail .manual-text{font-size:14px;line-height:1.6}
+#manual-detail .manual-view-steps{padding:0;list-style:none}
+#manual-detail .manual-view-steps li{padding:12px 0;border:0;border-bottom:1px solid var(--line);background:transparent;border-radius:0;gap:10px}
+#manual-detail .manual-step-number{width:24px;height:24px;font-size:12px;flex-shrink:0}
+#manual-detail .manual-section-heading{font-size:15px;margin:20px 0 8px}
+#manual-detail .manual-documents{padding:10px 0;border:0;border-radius:0;margin:12px 0}
+#manual-detail .manual-documents h3{font-size:14px;margin:0 0 8px}
+#manual-detail .manual-actions .button{min-height:36px;font-size:12px;padding:7px 10px;border-radius:7px}
+#manual-detail .manual-detail-actions{border-top:1px solid var(--line);padding-top:12px;gap:6px}
+@media(max-width:650px){#manual-detail{width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;padding:16px}#manual-detail .manual-detail-heading{top:-16px}#manual-detail .manual-gallery{gap:10px}#manual-section .toolbar{margin-bottom:6px}}

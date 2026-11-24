@@ -1,6 +1,6 @@
 import { wordFolder, wordKey, folderWords } from './word-folders.js?v=24';
 import { uploadDocuments, removedDocumentPaths } from './manual-documents.js?v=24';
-import { initManuals } from './manuals.js?v=25';
+import { initManuals } from './manuals.js?v=26';
 import { initWordAudio, recordingURL, audioFormat } from './word-audio.js?v=23';
 import { transferLocal, hydrateTransferredWord } from './entry-transfer.js?v=24';
 import { initWordPhoto, saveWordWithPhoto } from './word-photo.js?v=24';
