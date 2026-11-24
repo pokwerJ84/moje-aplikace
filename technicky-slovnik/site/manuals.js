@@ -1,3 +1,4 @@
+import { orderedManuals, saveManualOrder } from './manual-order.js?v=25';
 import { pdfDraft, uploadDocuments, openDocument, removedDocumentPaths } from './manual-documents.js?v=24';
 import { audioFormat, recordingURL } from './word-audio.js?v=23';
 // Personal measurement notebook. All cloud rows and photos use owner-only RLS.
@@ -8,9 +9,12 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   labels.cs.moveToWords='Přesunout do slovníku';labels.en.moveToWords='Move to vocabulary';
   Object.assign(labels.cs,{documents:'PDF manuály',addPDF:'Přidat PDF',openPDF:'Otevřít PDF',pdfHint:'PDF do 20 MB. Přílohy se uloží po stisknutí Uložit návod.',pdfInvalid:'Vyber platný soubor PDF do 20 MB.',pdfPopup:'Povol otevírání nových oken pro zobrazení PDF.',pdfError:'PDF se nepodařilo otevřít. Zkus to znovu.',error:'Návod se nepodařilo uložit. Zkus to znovu. Pokud je místní úložiště plné, přihlas se a ulož soubory do účtu.'});
   Object.assign(labels.en,{documents:'PDF manuals',addPDF:'Add PDF',openPDF:'Open PDF',pdfHint:'PDF files up to 20 MB. Attachments are saved when you select Save guide.',pdfInvalid:'Choose a valid PDF file up to 20 MB.',pdfPopup:'Allow pop-ups to open the PDF.',pdfError:'Could not open the PDF. Please retry.',error:'Could not save the guide. Please retry. If device storage is full, sign in to save files to your account.'});
+  Object.assign(labels.cs,{expandAll:'Rozbalit vše',collapseAll:'Sbalit vše',arrange:'Uspořádat',doneArrange:'Hotovo',drag:'Přesunout kartu',orderHelp:'Přetáhni kartu za úchyt ⋮⋮ nebo použij šipky. Pro řazení nejprve zruš hledání.',orderSaved:'Pořadí uloženo.',orderError:'Pořadí se nepodařilo uložit. Původní pořadí zůstalo zachované.',openGuide:'Otevřít celý návod'});
+  Object.assign(labels.en,{expandAll:'Expand all',collapseAll:'Collapse all',arrange:'Arrange',doneArrange:'Done',drag:'Move card',orderHelp:'Drag the ⋮⋮ handle or use the arrows. Clear the search before arranging.',orderSaved:'Order saved.',orderError:'Could not save order. The previous order is preserved.',openGuide:'Open full guide'});
   const t=k=>labels[getLanguage()][k];
   const key=()=> 'technical-manuals-v1'+(getUser()?':'+getUser().id:'');
   let list=[],draft=null,busy=false,loadedUser=null,loadFailed=false,photoStep=null;
+  let arranging=false,expanded=new Set(),drag=null;
   function read(k=key()){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return []}}
   function store(rows,k=key()){localStorage.setItem(k,JSON.stringify(rows))}
   function render(){
@@ -22,10 +26,18 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     $('#manual-search').setAttribute('aria-label',t('search'));
     const q=$('#manual-search').value.trim().toLocaleLowerCase();
     const filtered=list.filter(r=>[r.ja,r.en,r.model,r.description,...r.steps.map(s=>s.title+' '+s.text)].join(' ').toLocaleLowerCase().includes(q));
-    $('#manual-list').innerHTML=filtered.map(r=>`<button type="button" class="manual-card ${!r.ja.trim()||!r.en.trim()?'incomplete':''}" data-manual-open="${esc(r.id)}"><div class="manual-card-title manual-name-pair"><strong class="manual-name-en" lang="en">${esc(r.en||'—')}</strong><strong class="manual-name-ja" lang="ja">${esc(r.ja||'—')}</strong></div><small class="manual-kind">${esc(r.model||t(r.kind))}</small>${coverPhoto(r)?'<div class="manual-card-photo"></div>':''}${r.description?`<p>${esc(r.description.slice(0,160))}</p>`:''}<div class="manual-meta"><span>${stepCount(r.steps.length)}</span><span>${photoCount(r.photos.length)}</span></div></button>`).join('')||`<p class="empty">${t(list.length?'noResults':'empty')}</p>`;
-    for(const button of $('#manual-list').querySelectorAll('[data-manual-open]')){
-      const row=filtered.find(r=>r.id===button.dataset.manualOpen),photo=coverPhoto(row);
-      if(photo)void signedPhoto(photo).then(url=>{if(button.isConnected){const image=document.createElement('img');image.src=url;image.alt=photo.caption||row.en||row.ja||row.model;image.loading='lazy';button.querySelector('.manual-card-photo').replaceChildren(image);}}).catch(()=>{if(button.isConnected)button.querySelector('.manual-card-photo')?.remove();});
+    $('#manual-arrange').textContent=t(arranging?'doneArrange':'arrange');
+    $('#manual-arrange').setAttribute('aria-pressed',String(arranging));
+    $('#manual-arrange').disabled=busy||loadFailed||!!q||list.length<2;
+    $('#manual-order-help').hidden=!arranging;$('#manual-order-help').textContent=t('orderHelp');
+    $('#manual-expand').disabled=busy||!filtered.length;$('#manual-collapse').disabled=busy||!filtered.length;
+    $('#manual-list').classList.toggle('is-arranging',arranging);
+    $('#manual-list').innerHTML=filtered.map(r=>`<details class="manual-card manual-fold ${!r.ja.trim()||!r.en.trim()?'incomplete':''}" data-manual-card="${esc(r.id)}" ${expanded.has(r.id)?'open':''}><summary class="manual-summary"><span class="manual-chevron" aria-hidden="true">›</span><div class="manual-card-heading"><div class="manual-name-pair"><strong lang="en">${esc(r.en||r.ja||r.model||'—')}</strong>${r.ja&&r.en?`<span lang="ja">${esc(r.ja)}</span>`:''}</div><small class="manual-kind">${esc(r.model||t(r.kind))}</small></div><span class="manual-order-controls" ${arranging?'':'hidden'}><button type="button" class="manual-drag-handle" data-manual-drag="${esc(r.id)}" title="${esc(t('drag'))}" aria-label="${esc(t('drag'))}" ${busy?'disabled':''}>⋮⋮</button><button type="button" class="icon-button" data-manual-order="up" data-id="${esc(r.id)}" aria-label="${esc(t('up'))}" ${busy||list[0]?.id===r.id?'disabled':''}>↑</button><button type="button" class="icon-button" data-manual-order="down" data-id="${esc(r.id)}" aria-label="${esc(t('down'))}" ${busy||list.at(-1)?.id===r.id?'disabled':''}>↓</button></span></summary><div class="manual-card-body">${coverPhoto(r)?'<div class="manual-card-photo"></div>':''}${r.description?`<p class="manual-text">${esc(r.description.slice(0,220))}</p>`:''}<div class="manual-meta"><span>${stepCount(r.steps.length)}</span><span>${photoCount(r.photos.length)}</span>${r.documents?.length?`<span>${r.documents.length} PDF</span>`:''}</div><button type="button" class="button outline" data-manual-open="${esc(r.id)}">${t('openGuide')}</button></div></details>`).join('')||`<p class="empty">${t(list.length?'noResults':'empty')}</p>`;
+    for(const card of $('#manual-list').querySelectorAll('[data-manual-card]')){
+      const row=filtered.find(r=>r.id===card.dataset.manualCard);
+      const loadImage=()=>{const target=card.querySelector('.manual-card-photo');if(!card.open||!target||target.dataset.loading)return;target.dataset.loading='1';const photo=coverPhoto(row);void signedPhoto(photo).then(url=>{if(card.isConnected){const image=document.createElement('img');image.src=url;image.alt=photo.caption||row.en||row.ja||row.model;image.loading='lazy';target.replaceChildren(image);}}).catch(()=>{delete target.dataset.loading;});};
+      card.addEventListener('toggle',()=>{if(!card.isConnected)return;if(card.open)expanded.add(row.id);else expanded.delete(row.id);loadImage();});
+      loadImage();
     }
     $('#manual-example').hidden=list.length>0;
 
@@ -45,7 +57,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
   }
   async function setUser(){
     const user=getUser();loadedUser=user?.id||null;loadFailed=false;
-    list=read();render();
+    expanded.clear();arranging=false;drag=null;list=orderedManuals(read());render();
     if(!user)return;
     try{
       const result=await supabase.from('dictionary_manuals').select('*').order('created_at');if(result.error)throw result.error;
@@ -60,7 +72,7 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
         catch(error){if(uploaded.length)await cleanupUploads(uploaded);throw error}
       }
       if(loadedUser!==user.id)return;
-      list=cloud;store(list);localStorage.removeItem('technical-manuals-v1');render();
+      list=orderedManuals(cloud);store(list);localStorage.removeItem('technical-manuals-v1');render();
     }catch(error){console.error(error);loadFailed=true;render()}
   }
   async function signedPhoto(photo){if(photo.data)return photo.data;if(!photo.path)return '';const {data,error}=await supabase.storage.from('dictionary-images').createSignedUrl(photo.path,3600);if(error)throw error;return data.signedUrl}
@@ -128,7 +140,45 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     finally{busy=false;setSaveBusy(false);}
   };
   $('#manual-add').onclick=()=>edit();$('#manual-example').onclick=()=>{edit();$('#manual-form').elements.en.value='3D scanner';$('#manual-form').elements.model.value='KEYENCE VR3000'};
-  $('#manual-search').oninput=render;$('#manual-retry').onclick=()=>void setUser();
+  $('#manual-search').oninput=()=>{if($('#manual-search').value.trim())arranging=false;render();};$('#manual-retry').onclick=()=>void setUser();
+  $('#manual-expand').onclick=()=>{if(busy)return;for(const row of list)expanded.add(row.id);render();};
+  $('#manual-collapse').onclick=()=>{if(busy)return;expanded.clear();render();};
+  $('#manual-arrange').onclick=()=>{if(busy)return;arranging=!arranging;expanded.clear();render();};
+  async function persistOrder(ids,focusId){
+    if(busy)return;busy=true;const user=getUser(),rows=list;render();
+    try{
+      const next=await saveManualOrder({supabase,user,rows,ids,store});
+      if(getUser()?.id!==user?.id)return;
+      list=next;if(user)try{store(list)}catch(error){console.warn(error)}toast(t('orderSaved'));
+    }catch(error){console.error(error);if(getUser()?.id===user?.id)toast(t('orderError'));}
+    finally{busy=false;render();if(focusId){[...$('#manual-list').querySelectorAll('[data-manual-drag]')].find(el=>el.dataset.manualDrag===focusId)?.focus({preventScroll:true});}}
+  }
+  $('#manual-list').addEventListener('click',e=>{
+    const button=e.target.closest('[data-manual-order],[data-manual-drag]');if(!button)return;e.preventDefault();e.stopPropagation();
+    if(busy||!arranging||!button.dataset.manualOrder)return;
+    const ids=list.map(row=>row.id),i=ids.indexOf(button.dataset.id),j=i+(button.dataset.manualOrder==='up'?-1:1);
+    if(i>=0&&j>=0&&j<ids.length){[ids[i],ids[j]]=[ids[j],ids[i]];void persistOrder(ids,button.dataset.id);}
+  });
+  $('#manual-list').addEventListener('pointerdown',e=>{
+    const handle=e.target.closest('[data-manual-drag]');if(!handle||!arranging||busy||e.button!==0)return;
+    e.preventDefault();const card=handle.closest('[data-manual-card]');drag={id:card.dataset.manualCard,card,handle,pointer:e.pointerId,x:e.clientX,y:e.clientY,moved:false};handle.setPointerCapture(e.pointerId);
+  });
+  document.addEventListener('pointermove',e=>{
+    if(!drag||drag.pointer!==e.pointerId)return;
+    if(!drag.moved&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<8)return;
+    drag.moved=true;drag.card.classList.add('is-dragging');
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-manual-card]');
+    if(target&&target!==drag.card&&target.parentElement===drag.card.parentElement){const box=target.getBoundingClientRect();if(e.clientY<box.top+box.height/2)target.before(drag.card);else target.after(drag.card);}
+    if(e.clientY<90)window.scrollBy(0,-18);else if(e.clientY>window.innerHeight-90)window.scrollBy(0,18);
+  });
+  function endDrag(e){
+    if(!drag||drag.pointer!==e.pointerId)return;
+    const active=drag;drag=null;active.card.classList.remove('is-dragging');
+    if(e.type==='pointercancel'){render();return;}
+    const ids=[...$('#manual-list').querySelectorAll('[data-manual-card]')].map(card=>card.dataset.manualCard);
+    if(active.moved&&ids.some((id,i)=>id!==list[i]?.id))void persistOrder(ids,active.id);
+  }
+  document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
   $('#manual-list').onclick=e=>{const b=e.target.closest('[data-manual-open]');if(b)void show(list.find(r=>r.id===b.dataset.manualOpen))};
   $('#manual-add-step').onclick=()=>{collect();draft.steps.push({id:crypto.randomUUID(),title:'',text:''});renderDraft()};
   $('#manual-cover-add').onclick=()=>{photoStep='cover';$('#manual-photo-files').click()};$('#manual-cover-camera').onclick=()=>{photoStep='cover';$('#manual-camera-file').click()};
@@ -173,5 +223,5 @@ export function initManuals({supabase,getUser,getLanguage,toast,decodePhoto,onMo
     }catch(error){console.error(error);if(uploaded.length)await cleanupUploads(uploaded);$('#manual-message').textContent=t('error')}
     finally{busy=false;setSaveBusy(false)}
   };
-  list=read();render();return {setUser,render,getEntries:()=>list,replaceEntries:rows=>{list=rows;render();}};
+  list=orderedManuals(read());render();return {setUser,render,getEntries:()=>list,replaceEntries:rows=>{list=orderedManuals(rows);render();}};
 }

@@ -180,3 +180,27 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .word-audio-tools{margin:0 0 18px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--white)}.word-audio-tools h3{margin:0 0 10px;font-size:16px}.word-audio-tools .word-photo-actions .button{white-space:normal;font-size:14px}.word-audio-tools audio,#detail-recording audio{display:block;width:100%;max-width:100%;margin:10px 0}.word-audio-tools .hint{margin:10px 0}.word-audio-tools button[hidden]{display:none!important}
 
 .manual-documents{margin:20px 0;padding:16px;border:1px solid var(--line);border-radius:14px}.manual-document{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line);margin-bottom:12px}.manual-document>div:first-child{flex:1;min-width:0}.manual-document strong{display:block;overflow-wrap:anywhere}.manual-document small{display:block;margin-top:4px}.manual-document .manual-actions{margin:0}
+
+/* Compact instrument cards and accessible ordering controls. */
+#manual-list.manual-list{display:flex;flex-direction:column;gap:8px}
+.manual-list-tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.manual-list-tools .button{font-size:13px;padding:8px 12px}
+.manual-list-tools [aria-pressed=true]{background:var(--plum);color:white}
+#manual-list .manual-fold{padding:0;display:block;overflow:hidden}
+.manual-summary{display:flex;gap:12px;align-items:center;padding:12px 14px;list-style:none;cursor:pointer}
+.manual-summary::-webkit-details-marker{display:none}
+.manual-summary:focus-visible{outline:2px solid var(--plum);outline-offset:-3px}
+.manual-chevron{font-size:26px;line-height:1;transition:transform .15s;flex-shrink:0}
+.manual-fold[open] .manual-chevron{transform:rotate(90deg)}
+.manual-card-heading{flex:1;min-width:0}.manual-card-heading .manual-name-pair{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+#manual-list .manual-card-heading strong{font-size:15px;line-height:1.35;margin:0;overflow-wrap:anywhere}
+.manual-card-heading .manual-name-pair>span{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+#manual-list .manual-card-heading small{font-size:12px;margin:3px 0 0}
+.manual-card-body{padding:4px 16px 16px 44px;border-top:1px solid var(--line)}
+.manual-card-body .manual-card-photo{max-width:260px}.manual-card-body .manual-card-photo img{max-height:180px;object-fit:contain}
+.manual-card-body .manual-meta{margin:10px 0}.manual-card-body>.button{margin-top:8px}
+.manual-order-controls{display:flex;align-items:center;gap:2px;flex-shrink:0}.manual-order-controls[hidden]{display:none}
+.manual-drag-handle{touch-action:none;user-select:none;cursor:grab;border:0;background:transparent;color:var(--ink);font-size:24px;min-width:38px;min-height:44px;border-radius:8px}
+.manual-order-controls .icon-button{min-width:32px;min-height:44px;padding:4px}
+.is-arranging .manual-fold{border-style:dashed}.manual-fold.is-dragging{opacity:.6;border-color:var(--plum);box-shadow:0 0 0 2px var(--plum)}
+@media(max-width:480px){.manual-summary{padding:10px;gap:8px}.manual-card-heading .manual-name-pair{display:block}.manual-order-controls{gap:0}.manual-order-controls .icon-button{min-width:28px}.manual-drag-handle{min-width:30px}.manual-card-body{padding:8px 12px 14px}.manual-list-tools{gap:5px}}
